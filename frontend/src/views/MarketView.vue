@@ -1,0 +1,10 @@
+<script setup>
+import {ref,onMounted} from 'vue';import {api,messageOf} from '../api';import ItemCard from '../components/ItemCard.vue'
+const categories=['日用','家电','图书','数码','其他']
+const items=ref([]),loading=ref(true),error=ref(''),keyword=ref(''),category=ref(''),tradeType=ref(''),status=ref('AVAILABLE'),page=ref(1),pages=ref(1)
+async function load(p=1){loading.value=true;error.value='';try{const {data}=await api.get('/items',{params:{page:p,size:12,keyword:keyword.value||undefined,category:category.value||undefined,tradeType:tradeType.value||undefined,status:status.value}});items.value=data.records;page.value=data.current;pages.value=data.pages||1}catch(e){error.value=messageOf(e)}finally{loading.value=false}}
+function applyFilters(){page.value=1;load(1)}
+onMounted(load)
+</script>
+<template><section class="hero"><p class="eyebrow">梧桐社区 · 让好东西继续被使用</p><h1>在邻里间，遇见刚好需要的闲置</h1><form class="filters filters-stage2" @submit.prevent="applyFilters"><input v-model.trim="keyword" placeholder="搜索名称或描述"><select v-model="category" @change="applyFilters"><option value="">全部分类</option><option v-for="value in categories" :key="value">{{value}}</option></select><select v-model="tradeType" @change="applyFilters"><option value="">全部方式</option><option value="FREE">免费送</option><option value="NEGOTIABLE">随便给</option><option value="FIXED_PRICE">标价</option></select><select v-model="status" @change="applyFilters"><option value="AVAILABLE">可领取</option><option value="RESERVED">待交接</option><option value="COMPLETED">已送出归档</option></select><button>搜索</button></form></section>
+<p v-if="loading" class="state">正在按当前条件查找邻里好物…</p><p v-else-if="error" class="state error">{{error}} <button @click="load(page)">重试</button></p><div v-else-if="!items.length" class="state">没有找到符合全部条件的物品，试试减少一个筛选条件。</div><section v-else class="grid"><ItemCard v-for="item in items" :key="item.id" :item="item"/></section><div v-if="pages>1" class="pager"><button :disabled="page<=1" @click="load(page-1)">上一页</button><span>{{page}} / {{pages}}</span><button :disabled="page>=pages" @click="load(page+1)">下一页</button></div></template>

@@ -1,0 +1,6 @@
+package com.neighbormarket.domain;
+import com.baomidou.mybatisplus.annotation.*; import java.time.LocalDateTime;
+@TableName("item_interest") public class ItemInterest {
+ @TableId(type=IdType.AUTO) private Long id; private Long itemId; private Long userId; private Long slotId; private InterestStatus status; private LocalDateTime createdAt; private LocalDateTime updatedAt;
+ public Long getId(){return id;} public void setId(Long v){id=v;} public Long getItemId(){return itemId;} public void setItemId(Long v){itemId=v;} public Long getUserId(){return userId;} public void setUserId(Long v){userId=v;} public Long getSlotId(){return slotId;} public void setSlotId(Long v){slotId=v;} public InterestStatus getStatus(){return status;} public void setStatus(InterestStatus v){status=v;} public LocalDateTime getCreatedAt(){return createdAt;} public void setCreatedAt(LocalDateTime v){createdAt=v;} public LocalDateTime getUpdatedAt(){return updatedAt;} public void setUpdatedAt(LocalDateTime v){updatedAt=v;}
+}

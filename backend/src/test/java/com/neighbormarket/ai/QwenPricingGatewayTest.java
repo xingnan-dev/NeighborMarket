@@ -1,0 +1,9 @@
+package com.neighbormarket.ai;
+import com.fasterxml.jackson.databind.ObjectMapper;import com.neighbormarket.domain.TradeType;import com.sun.net.httpserver.HttpServer;import org.junit.jupiter.api.*;import java.net.*;import java.net.http.HttpClient;import java.time.Duration;import static org.junit.jupiter.api.Assertions.*;
+class QwenPricingGatewayTest {private HttpServer server;private String base;@BeforeEach void start()throws Exception{server=HttpServer.create(new InetSocketAddress("127.0.0.1",0),0);base="http://127.0.0.1:"+server.getAddress().getPort()+"/v1";}@AfterEach void stop(){server.stop(0);}
+ @Test void maps429WithoutLeakingBody(){respond(429,"secret supplier body",0);assertCode("AI_RATE_LIMITED",Duration.ofSeconds(2));}
+ @Test void mapsProvider5xx(){respond(503,"internal supplier detail",0);assertCode("AI_PROVIDER_ERROR",Duration.ofSeconds(2));}
+ @Test void mapsTimeout(){respond(200,"{}",200);assertCode("AI_TIMEOUT",Duration.ofMillis(50));}
+ private void respond(int status,String body,long delay){server.createContext("/v1/chat/completions",x->{try{if(delay>0)Thread.sleep(delay);byte[] b=body.getBytes(java.nio.charset.StandardCharsets.UTF_8);x.sendResponseHeaders(status,b.length);x.getResponseBody().write(b);x.close();}catch(Exception ignored){}});server.start();}
+ private void assertCode(String code,Duration timeout){var gateway=new QwenPricingGateway(new ObjectMapper(),HttpClient.newHttpClient(),"test-key",base,"test-model","qwen",timeout);var e=assertThrows(PricingException.class,()->gateway.estimate(new PricingModels.Request(TradeType.FIXED_PRICE,"a","b","c",null,null,null,null,null,null)));assertEquals(code,e.code());assertFalse(e.getMessage().contains("supplier"));}
+}

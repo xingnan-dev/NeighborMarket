@@ -1,0 +1,3 @@
+package com.neighbormarket.ai;
+import jakarta.validation.Valid;import org.springframework.security.core.Authentication;import org.springframework.web.bind.annotation.*;
+@RestController @RequestMapping("/api/ai/pricing") public class PricingController {private final PricingService service;public PricingController(PricingService service){this.service=service;}@PostMapping public PricingModels.Result estimate(@Valid @RequestBody PricingModels.Request request,Authentication auth){return service.estimate(request,auth.getName());}}

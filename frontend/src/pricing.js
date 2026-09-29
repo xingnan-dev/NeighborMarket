@@ -1,0 +1,2 @@
+export function applyRecommendedPrice(form,result){if(result?.status!=="ESTIMATE"||!Number.isFinite(Number(result.recommendedPrice)))return false;form.price=Number(result.recommendedPrice);return true}
+export function buildPublishPayload(form){const local=value=>value?`${value}:00`:null;return{title:form.title,description:form.description,category:form.category,tradeType:form.tradeType,price:form.tradeType==="FIXED_PRICE"?Number(form.price):null,pickupLocation:form.pickupLocation,slots:form.slots.map(slot=>({startAt:local(slot.startAt),endAt:local(slot.endAt)}))}}

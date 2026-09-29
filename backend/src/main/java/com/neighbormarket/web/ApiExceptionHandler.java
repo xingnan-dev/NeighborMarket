@@ -15,7 +15,10 @@ public class ApiExceptionHandler {
     ResponseEntity<ApiError> badRequest(IllegalArgumentException ex) {
         return ResponseEntity.badRequest().body(new ApiError("BAD_REQUEST", ex.getMessage()));
     }
-    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    @ExceptionHandler(com.neighbormarket.ai.PricingException.class)
+    ResponseEntity<ApiError> pricing(com.neighbormarket.ai.PricingException ex) {
+        return ResponseEntity.status(ex.status()).body(new ApiError(ex.code(), ex.getMessage()));
+    }    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     ResponseEntity<ApiError> badCredentials() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ApiError("BAD_CREDENTIALS", "账号或密码错误"));
     }

@@ -8,3 +8,7 @@
 - 阶段 1 仅包含登录、发布、广场、搜索/交易方式筛选、详情和我的发布。
 
 会话 Cookie 可降低脚本直接读取凭据的风险，但仍需 HTTPS、CSRF 防护、会话过期和密钥管理才能用于生产。本地阶段因前端代理形成同源请求；当前 CSRF 暂时关闭，只适合本地演示。
+
+## AI 定价调用边界
+
+`PublishView -> POST /api/ai/pricing -> PricingService -> PricingGateway -> Qwen/OpenAI-compatible API`。控制器要求已登录；服务层负责标价类型检查、按用户限流和业务结构校验；网关只负责超时受控的 HTTPS 调用及供应商错误映射。Prompt、API Key 和供应商原始响应均不记录。模型输入视为不可信数据，系统提示禁止其中的指令覆盖估价规则。

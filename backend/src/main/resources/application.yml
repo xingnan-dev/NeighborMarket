@@ -24,3 +24,8 @@ mybatis-plus:
     map-underscore-to-camel-case: true
 app:
   allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}
+llm:
+  api-key: ${LLM_API_KEY:}
+  base-url: ${LLM_BASE_URL:}
+  model: ${LLM_MODEL:}
+  provider: ${LLM_PROVIDER:}

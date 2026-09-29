@@ -1,100 +1,97 @@
-# NeighborMarket 邻里闲置
+# NeighborMarket
 
-阶段 3 的可运行全栈版本：Vue 3 + Vite 前端、Spring Boot 3 + MyBatis-Plus 后端、MySQL + Flyway 持久化。
+NeighborMarket 是一个面向社区闲置物品流转的最终面试展示版本，采用 Vue 3 + Vite 前端、Spring Boot REST 后端、MyBatis-Plus、MySQL 和 Flyway。
 
-## 已实现
+## 已实现功能
 
-- 两个 BCrypt 演示账号与服务端会话登录
-- 登录状态下发布物品，发布者身份完全取自后端认证信息
-- 免费送、随便给、固定价格的数据库和接口校验
-- 默认只展示 `AVAILABLE` 的真实数据库分页广场
-- 名称/描述搜索、分类与交易方式组合筛选、详情、我的发布
-- 24/72 小时新鲜度、最近确认时间、7 天陈旧提示和发布者“确认还在”
-- 加载、空数据、表单校验和接口失败状态
-- 移动端底部导航和桌面端顶部导航
+- Session 登录与两个本地演示账号（neighbor_a、neighbor_b）
+- 物品发布、名称搜索、分类筛选、交易方式筛选和状态筛选
+- 24/72 小时新鲜度提示，以及发布者确认“还在”
+- 想要、取消想要和重新申请
+- 公共交接地点与 1～5 个未来交接时段
+- 发布者确认领取人
+- 交接双方取消交接
+- 发布者标记已送出并完成归档
+- 公开留言与发布者一层回复
+- 固定价格物品的 AI 估价、信息不足追问和手工定价降级
+- 社区数据看板：本月发布、本月成交、当前在售、最快成交和未成交意向排行
+- 桌面端与移动端响应式界面
+- 可重复执行的演示数据脚本和 frontend/public/demo/ 本地图片
 
-已实现交接地点与未来时段、买家意向、发布者确认、交接卡、双方取消、发布者完成归档和公开留言。AI 定价与需求订阅尚未实现，也没有对应假入口。
+## 本地运行
 
-## 本地配置
+需要 Java 17、Maven、Node.js、npm 和 MySQL 8。数据库名默认为 neighbor_market。
 
-需要 Java 17、Maven、Node.js、npm 和 MySQL 8。数据库应为 `neighbor_market`，应用账号只拥有该库所需权限。
+在当前 PowerShell 会话中设置环境变量；密码只在本机交互输入，不写入仓库：
 
-PowerShell 当前会话中设置环境变量（密码只在本机填写，不写入文件）：
-
-```powershell
+~~~powershell
 $env:DB_HOST = '127.0.0.1'
 $env:DB_PORT = '3307'
 $env:DB_NAME = 'neighbor_market'
 $env:DB_USERNAME = 'neighbor_app'
 $env:DB_PASSWORD = Read-Host 'Database password' -MaskInput
 $env:APP_ALLOWED_ORIGINS = 'http://localhost:5173,http://localhost:5174'
-```
+~~~
 
-仓库根目录的 `.env.example` 仅用于说明变量名。Spring Boot 不会自动读取该文件。
+AI 配置只从环境变量读取，不能把密钥写入代码、文档或日志：
 
-## 启动
+~~~powershell
+$env:LLM_API_KEY = Read-Host 'LLM API key' -MaskInput
+$env:LLM_BASE_URL = 'https://your-openai-compatible-endpoint'
+$env:LLM_MODEL = 'your-model-name'
+$env:LLM_PROVIDER = 'openai-compatible'
+~~~
 
-后端：
+启动后端：
 
-```powershell
+~~~powershell
 Set-Location backend
 mvn spring-boot:run
-```
+~~~
 
-前端（另一个终端）：
+启动前端（另开终端）：
 
-```powershell
+~~~powershell
 Set-Location frontend
 npm install
 npm run dev
-```
+~~~
 
-打开 `http://localhost:5174`。演示账号：
+浏览器访问 http://localhost:5174。本地演示账号为 neighbor_a 和 neighbor_b，密码请使用本机已有的演示凭据，不要写入文档或命令历史。
 
-- `neighbor_a` / `neighborA123!`
-- `neighbor_b` / `neighborB123!`
+AI 估价单次请求超时为 45 秒；同一登录用户 60 秒内最多请求一次。供应商错误、429、超时或信息不足时，页面保留手工填写价格的发布路径。
 
-演示密码只用于本地样例，数据库保存的是 BCrypt 哈希，不可用于真实环境。
+## 测试与构建
 
-## 构建与测试
-
-```powershell
+~~~powershell
 Set-Location backend
 mvn test
 mvn package
 Set-Location ../frontend
-npm ci
+npm test
 npm run build
-```
+~~~
 
-## 结构
+## 演示数据
 
-- `backend/`：REST API、认证、MyBatis-Plus、Flyway
-- `frontend/`：Vue 页面与组件
-- `docs/architecture.md`：阶段 1 架构和认证风险
-- `docs/er.md`：与实际迁移一致的 ER 图
+演示数据脚本和图片说明位于 [scripts/demo/README.md](scripts/demo/README.md)。脚本会清理并重建本地业务数据，执行前必须备份；不要在演示过程中执行 reset 脚本。图片放在 frontend/public/demo/，由物品记录使用 /demo/... 路径引用。
 
+## 文档索引
 
-## 阶段 2 时间规则
+- [docs/architecture.md](docs/architecture.md)：最终系统架构与边界
+- [docs/er.md](docs/er.md)：V1～V5 对应的实体关系
+- [docs/stage-4.md](docs/stage-4.md)：AI 估价协议与校验记录
+- [docs/demo-guide.md](docs/demo-guide.md)：5 分钟面试演示脚本
+- [docs/technical-stack.md](docs/technical-stack.md)：技术栈与工程实践简介
+- [scripts/demo/README.md](scripts/demo/README.md)：演示数据备份、重建和验证说明
 
-数据库中的 `DATETIME` 按 Asia/Shanghai 墙上时间写入。API 明确返回 `displayTimeZone: Asia/Shanghai`，前端将无偏移时间按 `+08:00` 解析并使用 Asia/Shanghai 格式化。24 小时内为“刚上架”，恰好 24 小时至不足 72 小时为“新上架”，恰好 72 小时起显示天数；最近确认超过 7 个完整日时显示状态较久提示。
-## 局域网真机访问
+## 时间规则
 
-Vite 固定监听 `0.0.0.0:5174`，手机与电脑连接同一局域网后，通过电脑的局域网 IPv4 加端口 5174 访问。前端 API 保持相对路径 `/api`，由 Vite 代理到仅绑定 `127.0.0.1:8080` 的 Spring Boot；不要把数据库或后端端口暴露给手机或公网。
+数据库使用 Asia/Shanghai 业务墙上时间。接口声明 displayTimeZone: Asia/Shanghai；前端按该时区格式化时间。发布后 4 小时内显示“刚上架”，24～72 小时显示“新上架”，更早记录显示天数；超过 7 天未确认的物品会提示较久未确认。
 
-当前电脑地址示例：`http://10.69.229.113:5174/`。IP 可能在重新连接网络后改变，可用 `ipconfig` 重新确认。
-## 阶段 3 交接规则
+## 已知限制
 
-时间继续使用 Asia/Shanghai 的本地墙上时间。发布必须提供公共地点和 1 至 5 个尚未开始的时段；历史物品可由发布者在详情页补充。意向以 `(item_id, user_id)` 唯一，重复申请更新原记录。发布者确认时使用事务和 `item.status = AVAILABLE AND current_handover_id IS NULL` 条件更新抢占，只有一个请求能进入 `RESERVED`。`handover` 保存地点和时段快照。
-
-取消交接会保留历史、将物品恢复为 `AVAILABLE` 并取消已选意向；发布者完成交接后，物品与交接都进入 `COMPLETED`，详情和留言历史可读但禁止新意向、留言、时段和“确认还在”。广场默认显示可领取，可通过状态筛选进入“待交接”和“已送出归档”。
-## 阶段 3.1 公开留言回复
-
-V4 为 `item_comment` 增加可空 `parent_id` 自关联。原留言接口继续创建顶层问题；只有物品发布者可以在同一物品的顶层问题下回复，回复最多一层。`COMPLETED` 物品只展示历史问题与回复，禁止继续提交。留言及回复均在服务端去除首尾空格并限制为 1 至 500 字。
-## 阶段 4 AI 定价
-
-AI 定价仅在“标价”发布表单中出现。浏览器把物品名称、分类、原始描述和可选估价信息发送到已登录后端；后端使用 `LLM_API_KEY`、`LLM_BASE_URL`、`LLM_MODEL`、`LLM_PROVIDER` 调用 OpenAI 兼容 Chat Completions。密钥不会返回前端或写入日志。
-
-后端连接超时 5 秒、单次请求超时 45秒、不自动重试，并按登录用户限制 60 秒内最多一次估价。供应商 429、5xx、超时和非法结构会返回不含供应商原文的安全错误；用户仍能手工填写价格并发布。
-
-模型结果只接受 `NEED_MORE_INFO` 或 `ESTIMATE`。金额范围为 0 至 1,000,000 元、最多两位小数，且必须满足 `minPrice <= recommendedPrice <= maxPrice`。前端“填入推荐价”只修改价格框，不会自动提交表单。结果未查询实时二手成交行情，仅供参考。
+- 当前未实现图片上传，演示使用 frontend/public/demo/ 下的本地静态图片。
+- 当前 CSRF 防护关闭，仅适用于本地面试演示，不适合作为正式公网部署配置。
+- AI 估价不代表实时二手市场成交价，仅提供辅助参考。
+- 尚未配置正式公网生产部署、域名、TLS 和生产级监控。

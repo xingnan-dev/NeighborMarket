@@ -21,6 +21,7 @@ async function signout() {
     <nav class="desktop-nav" aria-label="主导航">
       <RouterLink to="/">逛闲置</RouterLink>
       <RouterLink to="/publish">发布</RouterLink>
+      <RouterLink to="/dashboard">社区数据</RouterLink>
       <RouterLink to="/mine">我的</RouterLink>
       <button v-if="auth.user" class="link" type="button" @click="signout">退出 {{ auth.user.nickname }}</button>
       <RouterLink v-else to="/login">登录</RouterLink>

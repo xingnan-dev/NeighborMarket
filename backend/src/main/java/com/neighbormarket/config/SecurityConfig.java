@@ -46,7 +46,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/login", "/error").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/items", "/api/items/detail/*", "/api/items/*/slots", "/api/items/*/comments").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/items", "/api/items/detail/*", "/api/items/*/slots", "/api/items/*/comments", "/api/dashboard").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors.authenticationEntryPoint((request, response, exception) -> {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);

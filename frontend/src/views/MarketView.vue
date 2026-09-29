@@ -52,6 +52,7 @@ onMounted(load)
       <p class="eyebrow">梧桐社区 · 邻里循环</p>
       <h1>在邻里间，遇见刚好需要的闲置</h1>
       <p class="hero-note">就近分享，让每件好东西继续被使用。</p>
+      <RouterLink class="dashboard-entry" to="/dashboard">查看社区数据 <span aria-hidden="true">→</span></RouterLink>
     </div>
     <form class="filters filters-stage2" aria-label="闲置筛选" @submit.prevent="applyFilters">
       <label class="filter-field filter-search">

@@ -6,9 +6,10 @@ import LoginView from './views/LoginView.vue'
 import PublishView from './views/PublishView.vue'
 import DetailView from './views/DetailView.vue'
 import MineView from './views/MineView.vue'
+import DashboardView from './views/DashboardView.vue'
 import './style.css'
 const router=createRouter({history:createWebHistory(),routes:[
  {path:'/',component:MarketView},{path:'/login',component:LoginView},{path:'/publish',component:PublishView},
- {path:'/items/:id',component:DetailView},{path:'/mine',component:MineView}
+ {path:'/items/:id',component:DetailView},{path:'/mine',component:MineView},{path:'/dashboard',component:DashboardView}
 ]})
 createApp(App).use(router).mount('#app')

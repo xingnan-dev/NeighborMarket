@@ -12,6 +12,7 @@ frontend/dist/
 !.env.example
 *.log
 logs/
+/backups/
 *.tmp
 *.swp
 .DS_Store

@@ -1,8 +1,9 @@
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api, messageOf } from '../api'
 import { applyRecommendedPrice, buildPublishPayload } from '../pricing'
+import { createLatestRequest } from '../latestRequest'
 
 const router = useRouter()
 const busy = ref(false)
@@ -11,6 +12,7 @@ const pricingBusy = ref(false)
 const pricingError = ref('')
 const pricingResult = ref(null)
 const pricingStale = ref(false)
+const pricingRequests = createLatestRequest()
 const form = reactive({
   title: '',
   description: '',
@@ -59,6 +61,8 @@ watch(
     form.accessories,
   ],
   () => {
+    pricingRequests.cancel()
+    pricingBusy.value = false
     if (pricingResult.value) pricingStale.value = true
     if (form.tradeType !== 'FIXED_PRICE') {
       pricingResult.value = null
@@ -69,15 +73,18 @@ watch(
 )
 
 async function estimate() {
+  if (pricingBusy.value) return
   pricingBusy.value = true
   pricingError.value = ''
   pricingResult.value = null
   pricingStale.value = false
   try {
-    pricingResult.value = (await api.post('/ai/pricing', pricingInput())).data
+    const result = await pricingRequests.run((signal) => api.post('/ai/pricing', pricingInput(), { signal }))
+    if (!result.accepted) return
+    pricingResult.value = result.value.data
+    pricingBusy.value = false
   } catch (e) {
     pricingError.value = messageOf(e)
-  } finally {
     pricingBusy.value = false
   }
 }
@@ -87,6 +94,7 @@ function useRecommended() {
 }
 
 async function submit() {
+  if (busy.value) return
   error.value = ''
   if (!form.title.trim() || !form.description.trim() || !form.pickupLocation.trim()) {
     error.value = '请完整填写物品与公共交接地点'
@@ -112,6 +120,8 @@ async function submit() {
     busy.value = false
   }
 }
+
+onUnmounted(pricingRequests.cancel)
 </script>
 
 <template>

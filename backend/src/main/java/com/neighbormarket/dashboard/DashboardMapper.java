@@ -49,13 +49,17 @@ public interface DashboardMapper {
             SELECT i.id AS item_id,
                    i.title,
                    i.status AS item_status,
-                   COUNT(DISTINCT ii.user_id) AS interest_count
+                   ranked.interest_count
             FROM item i
-            JOIN item_interest ii ON ii.item_id = i.id
+            JOIN (
+                SELECT ii.item_id,
+                       COUNT(DISTINCT ii.user_id) AS interest_count
+                FROM item_interest ii
+                WHERE ii.status IN ('WAITING', 'CONFIRMED')
+                GROUP BY ii.item_id
+            ) ranked ON ranked.item_id = i.id
             WHERE i.status <> 'COMPLETED'
-              AND ii.status IN ('WAITING', 'CONFIRMED')
-            GROUP BY i.id, i.title, i.status, i.published_at
-            ORDER BY interest_count DESC, i.published_at ASC, i.id ASC
+            ORDER BY ranked.interest_count DESC, i.published_at ASC, i.id ASC
             LIMIT 5
             """)
     List<MostWantedRow> findMostWantedUncompleted();

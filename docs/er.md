@@ -1,6 +1,6 @@
 # NeighborMarket 实际 ER
 
-下图对照 V1～V5 迁移和当前实体字段整理；V5 仅增加索引。
+下图对照 V1～V7 迁移和当前实体字段整理；V5 增加看板索引，V6 为交接时段增加 active 标志，V7 强化状态与跨表业务一致性约束。
 
 ~~~mermaid
 erDiagram
@@ -18,9 +18,9 @@ erDiagram
     ITEM_COMMENT ||--o{ ITEM_COMMENT : replies
     APP_USER { BIGINT id PK VARCHAR username UK VARCHAR password_hash VARCHAR nickname DATETIME created_at }
     ITEM { BIGINT id PK BIGINT publisher_id FK VARCHAR title VARCHAR description VARCHAR category VARCHAR trade_type DECIMAL price VARCHAR image_url VARCHAR status DATETIME published_at DATETIME last_confirmed_at DATETIME completed_at VARCHAR pickup_location BIGINT current_handover_id FK }
-    PICKUP_SLOT { BIGINT id PK BIGINT item_id FK DATETIME start_at DATETIME end_at DATETIME created_at }
+    PICKUP_SLOT { BIGINT id PK BIGINT item_id FK DATETIME start_at DATETIME end_at BOOLEAN active DATETIME created_at }
     ITEM_INTEREST { BIGINT id PK BIGINT item_id FK BIGINT user_id FK BIGINT slot_id FK VARCHAR status DATETIME created_at DATETIME updated_at }
-    HANDOVER { BIGINT id PK BIGINT item_id FK BIGINT publisher_id FK BIGINT recipient_id FK BIGINT interest_id FK DATETIME start_at DATETIME end_at VARCHAR location_snapshot VARCHAR status DATETIME created_at DATETIME cancelled_at DATETIME completed_at }
+    HANDOVER { BIGINT id PK BIGINT item_id FK BIGINT publisher_id FK BIGINT recipient_id FK BIGINT interest_id FK DATETIME start_at DATETIME end_at VARCHAR location_snapshot VARCHAR status BIGINT active_item_id UK_GENERATED DATETIME created_at DATETIME cancelled_at DATETIME completed_at }
     ITEM_COMMENT { BIGINT id PK BIGINT item_id FK BIGINT user_id FK BIGINT parent_id FK VARCHAR content DATETIME created_at }
 ~~~
 
@@ -29,5 +29,8 @@ erDiagram
 - item_interest(item_id, user_id) 唯一，重复申请会更新原意向。
 - item_comment.parent_id 可为空；为空是顶层留言，非空时引用同表顶层留言。服务层只允许一层回复，且只有发布者可回复。
 - item.current_handover_id 引用当前交接；取消交接时恢复 AVAILABLE，完成时物品和交接均进入 COMPLETED。
-- pickup_slot 的结束时间必须晚于开始时间；应用层限制每件物品 1～5 个未来时段。
-- V1～V4 创建表、约束和工作流字段；V5 增加 item.published_at 与 handover(status, completed_at, item_id) 相关索引，用于看板查询。
+- pickup_slot 的结束时间必须晚于开始时间；应用层限制每件物品 1～5 个未来有效时段。重配时旧时段改为 inactive 而不删除，使已取消或历史意向的外键仍然有效。
+- V7 使用 CHECK 限制 item、item_interest、handover 的状态集合，并约束 ACTIVE/CANCELLED/COMPLETED 对应的交接终态时间字段。
+- V7 的 handover.active_item_id 是仅 ACTIVE 状态返回 item_id 的生成列；唯一索引保证每件物品最多一条 ACTIVE 交接。
+- V7 复合外键保证：意向选择的时段属于同一物品；交接关联的意向属于同一物品和领取人；交接发布者是物品发布者；item.current_handover_id 指向本物品的交接。
+- V1～V4 创建表、基础约束和工作流字段；V5 增加看板索引；V6 保留时段历史；V7 强化交易一致性。

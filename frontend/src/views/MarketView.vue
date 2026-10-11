@@ -1,6 +1,7 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { api, messageOf } from '../api'
+import { createLatestRequest } from '../latestRequest'
 import ItemCard from '../components/ItemCard.vue'
 
 const categories = ['日用', '家电', '图书', '数码', '其他']
@@ -13,27 +14,31 @@ const tradeType = ref('')
 const status = ref('AVAILABLE')
 const page = ref(1)
 const pages = ref(1)
+const itemRequests = createLatestRequest()
 
 async function load(p = 1) {
   loading.value = true
   error.value = ''
   try {
-    const { data } = await api.get('/items', {
+    const result = await itemRequests.run((signal) => api.get('/items', {
+      signal,
       params: {
-        page: p,
-        size: 12,
-        keyword: keyword.value || undefined,
-        category: category.value || undefined,
-        tradeType: tradeType.value || undefined,
-        status: status.value,
-      },
-    })
+          page: p,
+          size: 12,
+          keyword: keyword.value || undefined,
+          category: category.value || undefined,
+          tradeType: tradeType.value || undefined,
+          status: status.value,
+        },
+      }))
+    if (!result.accepted) return
+    const { data } = result.value
     items.value = data.records
     page.value = data.current
     pages.value = data.pages || 1
+    loading.value = false
   } catch (e) {
     error.value = messageOf(e)
-  } finally {
     loading.value = false
   }
 }
@@ -44,6 +49,7 @@ function applyFilters() {
 }
 
 onMounted(load)
+onUnmounted(itemRequests.cancel)
 </script>
 
 <template>

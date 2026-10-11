@@ -1,25 +1,30 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref } from 'vue'
 import { api, messageOf } from '../api'
+import { createLatestRequest } from '../latestRequest'
 import { formatDashboardTime, formatDuration, itemStatusLabel } from '../dashboard'
 
 const dashboard = ref(null)
 const loading = ref(true)
 const error = ref('')
+const dashboardRequests = createLatestRequest()
 
 async function load() {
   loading.value = true
   error.value = ''
   try {
-    dashboard.value = (await api.get('/dashboard')).data
+    const result = await dashboardRequests.run((signal) => api.get('/dashboard', { signal }))
+    if (!result.accepted) return
+    dashboard.value = result.value.data
+    loading.value = false
   } catch (e) {
     error.value = messageOf(e)
-  } finally {
     loading.value = false
   }
 }
 
 onMounted(load)
+onUnmounted(dashboardRequests.cancel)
 </script>
 
 <template>

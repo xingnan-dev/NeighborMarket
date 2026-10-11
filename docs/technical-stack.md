@@ -5,12 +5,12 @@
 - 前端：Vue 3、Vue Router、Vite、原生 CSS。
 - 后端：Java 17、Spring Boot、Spring Security Session、Bean Validation。
 - 数据访问：MyBatis-Plus。
-- 数据库：MySQL 8，Flyway 管理 V1～V5 迁移。
+- 数据库：MySQL 8，Flyway 管理 V1～V7 迁移。
 - AI：后端调用 OpenAI-compatible Chat Completions，前端只接收经过校验的 DTO。
 
 ## 数据与权限
 
-用户、物品、交接时段、意向、交接和留言均有明确外键。item_interest(item_id, user_id) 唯一约束避免重复意向；item_comment.parent_id 实现一层回复。后端从 Session 用户确定发布者、领取人和留言权限，前端不直接连接数据库。
+用户、物品、交接时段、意向、交接和留言均有明确外键。item_interest(item_id, user_id) 唯一约束避免重复意向；V7 的生成列唯一索引限制每件物品最多一条 ACTIVE 交接，复合外键防止跨物品或领取人错配；item_comment.parent_id 实现一层回复。后端从 Session 用户确定发布者、领取人和留言权限，前端不直接连接数据库。
 
 ## 并发控制
 
@@ -22,4 +22,4 @@ API Key 和供应商配置只从环境变量读取。后端限制输入与结构
 
 ## 看板与测试
 
-社区看板由 DashboardMapper 使用 SQL 聚合生成 DTO，不加载全表到 Java 计算；V5 只提供相应索引。后端使用 mvn test、mvn package，前端使用 npm test、npm run build 验证。当前项目面向本地面试演示，尚未配置正式公网部署。
+社区看板由 DashboardMapper 使用 SQL 聚合生成 DTO，不加载全表到 Java 计算；V5 提供看板索引，V6 通过 active 时段保留意向历史，V7 强化交易数据一致性。后端使用 mvn test、mvn package，前端使用 npm test、npm run build 验证。当前项目尚未配置正式公网部署。

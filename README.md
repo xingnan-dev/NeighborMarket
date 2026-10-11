@@ -31,6 +31,9 @@ $env:DB_NAME = 'neighbor_market'
 $env:DB_USERNAME = 'neighbor_app'
 $env:DB_PASSWORD = Read-Host 'Database password' -MaskInput
 $env:APP_ALLOWED_ORIGINS = 'http://localhost:5173,http://localhost:5174'
+$env:SPRING_PROFILES_ACTIVE = 'demo'
+$env:DEMO_USER_A_PASSWORD = Read-Host 'neighbor_a demo password' -MaskInput
+$env:DEMO_USER_B_PASSWORD = Read-Host 'neighbor_b demo password' -MaskInput
 ~~~
 
 AI 配置只从环境变量读取，不能把密钥写入代码、文档或日志：
@@ -57,7 +60,7 @@ npm install
 npm run dev
 ~~~
 
-浏览器访问 http://localhost:5174。本地演示账号为 neighbor_a 和 neighbor_b，密码请使用本机已有的演示凭据，不要写入文档或命令历史。
+浏览器访问 http://localhost:5174。只有显式启用 `demo` profile 时才会创建 neighbor_a 和 neighbor_b；密码必须通过本机环境变量提供，不要写入文档或命令历史。非演示环境不要启用该 profile。
 
 AI 估价单次请求超时为 45 秒；同一登录用户 60 秒内最多请求一次。供应商错误、429、超时或信息不足时，页面保留手工填写价格的发布路径。
 
@@ -79,11 +82,14 @@ npm run build
 ## 文档索引
 
 - [docs/architecture.md](docs/architecture.md)：最终系统架构与边界
-- [docs/er.md](docs/er.md)：V1～V5 对应的实体关系
+- [docs/er.md](docs/er.md)：V1～V7 对应的实体关系与关键约束
+- [docs/PHASE_B_ACCEPTANCE_REPORT.md](docs/PHASE_B_ACCEPTANCE_REPORT.md)：事务、并发、幂等与数据库可靠性验收证据
+- [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md)：可复现数据集、SQL 执行计划与优化前基线
 - [docs/stage-4.md](docs/stage-4.md)：AI 估价协议与校验记录
 - [docs/demo-guide.md](docs/demo-guide.md)：5 分钟面试演示脚本
 - [docs/technical-stack.md](docs/technical-stack.md)：技术栈与工程实践简介
 - [scripts/demo/README.md](scripts/demo/README.md)：演示数据备份、重建和验证说明
+- [scripts/audit/README.md](scripts/audit/README.md)：只读数据一致性审计与异常处理原则
 
 ## 时间规则
 
@@ -92,6 +98,6 @@ npm run build
 ## 已知限制
 
 - 当前未实现图片上传，演示使用 frontend/public/demo/ 下的本地静态图片。
-- 当前 CSRF 防护关闭，仅适用于本地面试演示，不适合作为正式公网部署配置。
+- Session 写操作使用 Cookie CSRF Token；前端启动时获取令牌并由 Axios 通过 `X-XSRF-TOKEN` 回传。
 - AI 估价不代表实时二手市场成交价，仅提供辅助参考。
 - 尚未配置正式公网生产部署、域名、TLS 和生产级监控。

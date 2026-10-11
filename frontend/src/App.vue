@@ -1,10 +1,10 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { auth, loadUser, logout } from './auth'
+import { auth, initializeAuth, logout } from './auth'
 
 const router = useRouter()
-onMounted(loadUser)
+onMounted(initializeAuth)
 
 async function signout() {
   await logout()

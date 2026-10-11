@@ -19,11 +19,17 @@ server:
       cookie:
         http-only: true
         same-site: lax
+        secure: ${SESSION_COOKIE_SECURE:false}
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
 app:
   allowed-origins: ${APP_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:5174,http://127.0.0.1:5173,http://127.0.0.1:5174}
+  demo:
+    user-a:
+      password: ${DEMO_USER_A_PASSWORD:}
+    user-b:
+      password: ${DEMO_USER_B_PASSWORD:}
 llm:
   api-key: ${LLM_API_KEY:}
   base-url: ${LLM_BASE_URL:}

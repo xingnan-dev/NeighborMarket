@@ -25,6 +25,8 @@ class DashboardSqlContractTest {
 
         assertTrue(sql.contains("count(distinct ii.user_id)"));
         assertTrue(sql.contains("ii.status in ('waiting', 'confirmed')"));
+        assertTrue(sql.contains("group by ii.item_id"));
+        assertTrue(sql.contains("ranked on ranked.item_id = i.id"));
         assertTrue(sql.contains("i.status <> 'completed'"));
     }
 
@@ -32,7 +34,7 @@ class DashboardSqlContractTest {
     void wantedRankingHasStableOrderingForTies() throws Exception {
         String sql = sql("findMostWantedUncompleted");
 
-        assertTrue(sql.contains("order by interest_count desc, i.published_at asc, i.id asc"));
+        assertTrue(sql.contains("order by ranked.interest_count desc, i.published_at asc, i.id asc"));
     }
 
     private String sql(String methodName) throws Exception {

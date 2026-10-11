@@ -1,10 +1,66 @@
 package com.neighbormarket.web;
-import com.baomidou.mybatisplus.core.metadata.IPage; import com.baomidou.mybatisplus.extension.plugins.pagination.Page; import com.neighbormarket.domain.*; import com.neighbormarket.service.*; import jakarta.validation.Valid; import jakarta.validation.constraints.*; import org.springframework.security.core.Authentication; import org.springframework.web.bind.annotation.*; import java.math.BigDecimal; import java.util.List;
-@RestController @RequestMapping("/api/items") public class ItemController {private final ItemService service;public ItemController(ItemService s){service=s;}
- @GetMapping public IPage<ItemService.ItemView> market(@RequestParam(defaultValue="1")long page,@RequestParam(defaultValue="12")long size,@RequestParam(required=false)String keyword,@RequestParam(required=false)String category,@RequestParam(required=false)TradeType tradeType,@RequestParam(required=false)ItemStatus status){if(page<1||size<1||size>50)throw new IllegalArgumentException("分页参数不正确");return service.market(new Page<>(page,size),keyword,category,tradeType,status);}
- @GetMapping("/detail/{id}") public ItemService.ItemView detail(@PathVariable Long id){return service.detail(id);}
- @PostMapping public ItemService.ItemView create(@Valid @RequestBody CreateItemRequest b,Authentication a){return service.create(b,a.getName());}
- @PostMapping("/{id}/confirm-available") public ItemService.ItemView confirm(@PathVariable Long id,Authentication a){return service.confirmAvailable(id,a.getName());}
- @GetMapping("/mine") public IPage<ItemService.ItemView> mine(@RequestParam(defaultValue="1")long page,@RequestParam(defaultValue="50")long size,Authentication a){return service.mine(new Page<>(page,Math.min(Math.max(size,1),50)),a.getName());}
- public record CreateItemRequest(@NotBlank @Size(max=100)String title,@NotBlank @Size(max=2000)String description,@NotBlank @Size(max=50)String category,@NotNull TradeType tradeType,@Digits(integer=8,fraction=2)BigDecimal price,@NotBlank @Size(max=200)String pickupLocation,@NotEmpty @Size(max=5)List<ExchangeService.SlotInput> slots){}
+
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.neighbormarket.domain.ItemStatus;
+import com.neighbormarket.domain.TradeType;
+import com.neighbormarket.service.ItemService;
+import com.neighbormarket.web.dto.ItemRequests;
+import jakarta.validation.Valid;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/items")
+public class ItemController {
+    private final ItemService service;
+
+    public ItemController(ItemService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public IPage<ItemService.ItemView> market(
+            @RequestParam(defaultValue = "1") long page,
+            @RequestParam(defaultValue = "12") long size,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) TradeType tradeType,
+            @RequestParam(required = false) ItemStatus status) {
+        if (page < 1 || size < 1 || size > 50) {
+            throw new IllegalArgumentException("分页参数不正确");
+        }
+        return service.market(new Page<>(page, size), keyword, category, tradeType, status);
+    }
+
+    @GetMapping("/detail/{id}")
+    public ItemService.ItemView detail(@PathVariable Long id) {
+        return service.detail(id);
+    }
+
+    @PostMapping
+    public ItemService.ItemView create(
+            @Valid @RequestBody ItemRequests.CreateItem body,
+            Authentication authentication) {
+        return service.create(body.toCommand(), authentication.getName());
+    }
+
+    @PostMapping("/{id}/confirm-available")
+    public ItemService.ItemView confirm(@PathVariable Long id, Authentication authentication) {
+        return service.confirmAvailable(id, authentication.getName());
+    }
+
+    @GetMapping("/mine")
+    public IPage<ItemService.ItemView> mine(
+            @RequestParam(defaultValue = "1") long page,
+            @RequestParam(defaultValue = "50") long size,
+            Authentication authentication) {
+        return service.mine(new Page<>(page, Math.min(Math.max(size, 1), 50)), authentication.getName());
+    }
 }

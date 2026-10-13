@@ -1,0 +1,59 @@
+name: neighbormarket
+
+services:
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: ${DB_NAME:-neighbor_market}
+      MYSQL_USER: ${DB_USERNAME:-neighbor_app}
+      MYSQL_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in an ignored .env file}
+      MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -u$$MYSQL_USER -p$$MYSQL_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-neighbor_market}
+      DB_USERNAME: ${DB_USERNAME:-neighbor_app}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in an ignored .env file}
+      DB_USE_SSL: "false"
+      APP_ALLOWED_ORIGINS: ${APP_ORIGIN:-http://localhost:8088}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
+      LLM_API_KEY: ${LLM_API_KEY:-}
+      LLM_BASE_URL: ${LLM_BASE_URL:-}
+      LLM_MODEL: ${LLM_MODEL:-}
+      LLM_PROVIDER: ${LLM_PROVIDER:-}
+      TZ: Asia/Shanghai
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "${APP_PORT:-8088}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  mysql-data:

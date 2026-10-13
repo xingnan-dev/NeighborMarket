@@ -75,6 +75,10 @@ npm test
 npm run build
 ~~~
 
+后端提供最小化 Actuator 健康端点，浏览器入口仅转发 `/actuator/health`，不会暴露环境或配置详情。项目已提供前后端多阶段镜像及 MySQL Compose 环境；启动命令、环境变量和数据卷约定见 [docs/deployment.md](docs/deployment.md)。
+
+仓库包含 GitHub Actions CI：后端使用 Java 17 执行包含 Testcontainers 的 `mvn verify`，前端基于锁文件执行测试和生产构建，最后校验 Compose 并构建双端镜像。工作流文件见 `.github/workflows/ci.yml`。
+
 ## 演示数据
 
 演示数据脚本和图片说明位于 [scripts/demo/README.md](scripts/demo/README.md)。脚本会清理并重建本地业务数据，执行前必须备份；不要在演示过程中执行 reset 脚本。图片放在 frontend/public/demo/，由物品记录使用 /demo/... 路径引用。
@@ -88,6 +92,7 @@ npm run build
 - [docs/stage-4.md](docs/stage-4.md)：AI 估价协议与校验记录
 - [docs/demo-guide.md](docs/demo-guide.md)：5 分钟面试演示脚本
 - [docs/technical-stack.md](docs/technical-stack.md)：技术栈与工程实践简介
+- [docs/deployment.md](docs/deployment.md)：环境隔离、后端镜像与健康检查约定
 - [scripts/demo/README.md](scripts/demo/README.md)：演示数据备份、重建和验证说明
 - [scripts/audit/README.md](scripts/audit/README.md)：只读数据一致性审计与异常处理原则
 

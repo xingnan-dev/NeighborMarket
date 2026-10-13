@@ -35,3 +35,13 @@ llm:
   base-url: ${LLM_BASE_URL:}
   model: ${LLM_MODEL:}
   provider: ${LLM_PROVIDER:}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true

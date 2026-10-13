@@ -370,18 +370,41 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 
 | 任务 | 状态 | 优先级 | 难度 | 依赖 | 主要风险 | 验收标准 |
 | --- | --- | --- | --- | --- | --- | --- |
-| NM-D-01 后端多阶段 Dockerfile | TODO | P1 | 中 | Phase A | 镜像含源码/密钥或以 root 运行 | 可复现构建；运行镜像精简、非 root、无密钥；健康检查可用 |
-| NM-D-02 前端生产镜像 | TODO | P1 | 中 | Phase A | SPA 路由刷新 404、代理错误 | 静态资源生产构建；history fallback；API 反代正确；非 root 或最小权限 |
-| NM-D-03 Docker Compose | TODO | P1 | 中高 | NM-D-01、02、B-02 | 健康依赖和卷配置不稳定 | 应用、前端、MySQL 一条命令启动；持久卷保留数据；无默认生产密码；等待健康而非固定 sleep |
-| NM-D-04 环境与密钥管理 | TODO | P0 | 中 | NM-A-01、04 | 示例配置泄密 | dev/demo/test/prod 行为明确；`.env.example` 无真实秘密；缺少必需生产变量时快速失败 |
-| NM-D-05 GitHub Actions CI | TODO | P1 | 中 | NM-B-01 | Testcontainers runner 配置 | PR/push 执行后端测试、前端测试和双端构建；缓存不影响正确性；失败阻止绿色状态 |
-| NM-D-06 Actuator 健康与指标 | TODO | P1 | 中 | NM-D-04 | 暴露敏感端点 | 只公开 health/info 或经授权的指标；健康状态包含 DB；不暴露 env/configprops 等敏感信息 |
+| NM-D-01 后端多阶段 Dockerfile | VERIFIED | P1 | 中 | Phase A | 镜像含源码/密钥或以 root 运行 | 可复现构建；运行镜像精简、非 root、无密钥；健康检查可用 |
+| NM-D-02 前端生产镜像 | VERIFIED | P1 | 中 | Phase A | SPA 路由刷新 404、代理错误 | 静态资源生产构建；history fallback；API 反代正确；非 root 或最小权限 |
+| NM-D-03 Docker Compose | VERIFIED | P1 | 中高 | NM-D-01、02、B-02 | 健康依赖和卷配置不稳定 | 应用、前端、MySQL 一条命令启动；持久卷保留数据；无默认生产密码；等待健康而非固定 sleep |
+| NM-D-04 环境与密钥管理 | VERIFIED | P0 | 中 | NM-A-01、04 | 示例配置泄密 | dev/demo/test/prod 行为明确；`.env.example` 无真实秘密；缺少必需生产变量时快速失败 |
+| NM-D-05 GitHub Actions CI | DONE | P1 | 中 | NM-B-01 | Testcontainers runner 配置 | PR/push 执行后端测试、前端测试和双端构建；缓存不影响正确性；失败阻止绿色状态 |
+| NM-D-06 Actuator 健康与指标 | VERIFIED | P1 | 中 | NM-D-04 | 暴露敏感端点 | 只公开 health/info 或经授权的指标；健康状态包含 DB；不暴露 env/configprops 等敏感信息 |
 | NM-D-07 请求 ID 与日志规范 | TODO | P1 | 中 | NM-A-07 | 日志泄漏 Cookie/Prompt/密钥 | 每请求生成/透传 request ID；错误体可关联；关键状态转换有结构化字段；敏感字段脱敏 |
 | NM-D-08 后端覆盖率与测试分层 | TODO | P1 | 中 | Phase B | 追求数字而写低价值测试 | 单元、Web、安全、MySQL 集成测试分层；关键状态分支有测试；报告覆盖缺口而不设虚假百分比 |
 | NM-D-09 前端组件测试基础 | TODO | P1 | 中 | Phase A/C | jsdom 与浏览器差异 | 覆盖登录、详情权限、错误反馈、发布校验、重复提交；测试可在 CI 无头运行 |
 | NM-D-10 核心 E2E | TODO | P1 | 高 | NM-D-03、09 | 测试数据污染和脆弱选择器 | 独立测试库完成登录→发布→申请→确认→完成；可重复运行；不调用真实 AI |
 | NM-D-11 部署 smoke test | TODO | P1 | 中 | NM-D-03、06、10 | 只验证端口未验证业务 | 新环境启动后验证健康、迁移、登录和核心 API；重启后数据保留 |
 | NM-D-12 Phase D 验收与报告 | TODO | P1 | 低 | NM-D-01～11 | 本地成功但 CI 失败 | 本地与 CI 命令、镜像摘要、启动时间、测试数量和已知限制均记录 |
+
+### Phase D 执行记录
+
+#### 2026-10-12 / 批次 D1（环境、健康检查与后端镜像）
+
+- NM-D-04 VERIFIED：生产 profile 要求外部提供数据库主机、库名、用户、密码和允许源；生产 Cookie 默认 Secure、容器监听地址默认 `0.0.0.0`。新增2项配置契约测试，验证缺少关键变量快速失败和外部值正确绑定；开发、演示、测试、生产边界记录于 `docs/deployment.md`。
+- NM-D-06 IN_PROGRESS：引入 Actuator，只暴露 health/info，匿名安全规则只允许这些 GET 路径，健康详情关闭并启用 liveness/readiness probes；安全测试确认 `/actuator/env` 不匿名开放。等待真实 MySQL 容器启动后验证 DB health 与响应内容，再决定 VERIFIED。
+- NM-D-01 IN_PROGRESS：新增 Maven/JDK→Alpine JRE 多阶段 Dockerfile、非 root `app` 用户、生产 profile、内存比例参数、健康检查和 `.dockerignore`。当前 Docker Engine 未运行，镜像尚未实际构建/启动，因此不能标记 VERIFIED。
+- 针对性测试5项通过。无 Docker 的全量回归共95项、0失败、0错误、28项明确跳过；跳过项全部为 MySQL/Testcontainers 集成测试。前端13项通过且 Vite 构建成功。Docker 恢复后必须重跑后端全量测试，并完成镜像构建、非 root 检查与健康状态验证。
+
+#### 2026-10-13 / 批次 D2（Compose 全栈部署验收）
+
+- NM-D-01 VERIFIED：后端多阶段镜像实际构建成功；运行容器身份为 `uid=100(app)`，容器健康检查通过。首次构建发现 `dependency:go-offline` 会解析无关 Site 插件并受网络握手影响，已改为直接执行可复现的 Maven package。
+- NM-D-02 VERIFIED：Vue 生产构建由非特权 Nginx 镜像提供，运行身份为 `uid=101(nginx)`；根页面、SPA fallback、`/api/` 反代和静态资源规则均由同源入口提供。
+- NM-D-03 VERIFIED：`docker compose up -d --wait` 依次等待 MySQL、后端和前端健康；数据库端口不暴露到宿主机且密码无默认值。新建隔离卷后 Flyway 从空库成功执行7个迁移；写入临时标记、重启 MySQL 后仍可读取，随后已删除临时表。
+- NM-D-06 VERIFIED：经前端入口访问 `/actuator/health` 返回200与 `UP`，`/actuator/env` 返回404；后端不映射宿主机端口，Compose 健康状态同时验证数据库可连接。详细健康信息仍保持关闭。
+- Docker 可用后后端全量回归实际运行99项，0失败、0错误、0跳过，包含 MySQL Testcontainers 测试。前端既有13项测试和 Vite 构建此前均通过。本批次未完成登录及完整业务 E2E，因此 NM-D-11 仍为 TODO。
+
+#### 2026-10-13 / 批次 D3（持续集成）
+
+- NM-D-05 DONE：新增 GitHub Actions CI，限定只读仓库权限，并为同一引用启用旧任务取消。后端 Job 使用 Temurin Java 17 和 Maven 缓存执行 `mvn verify`；前端 Job 使用 Node.js 22 和锁文件执行 `npm ci`、13项测试及 Vite 构建；二者成功后才验证 Compose 配置并构建双端镜像。失败时保留后端测试报告7天。
+- CI 原始命令已在本机复跑：后端99项测试、0失败、0错误、0跳过且打包成功；前端13项测试全部通过并构建成功；Compose 配置校验和双镜像构建成功。工作流只有推送至 GitHub 后才能获得远端运行证据，因此当前为 DONE，不能提前标记 VERIFIED。
+- `npm audit --omit=dev` 报告3个高危项，涉及 Vue/server-renderer 的特定 XSS 公告和 `source-map-js` 的拒绝服务公告。当前未自动执行强制升级；需要单独核对本 SPA 的可达性、兼容升级版本并回归，不能为消除告警而绕过锁文件或降低测试标准。
 
 ## 10. Phase E — 业务完整性完善
 

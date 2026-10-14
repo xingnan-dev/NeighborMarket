@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @WebMvcTest(controllers = ActuatorSecurityTest.TestEndpoints.class)
-@Import({SecurityConfig.class, ActuatorSecurityTest.TestEndpoints.class})
+@Import({SecurityConfig.class, RequestIdFilter.class, ActuatorSecurityTest.TestEndpoints.class})
 @TestPropertySource(properties = "app.allowed-origins=http://localhost")
 class ActuatorSecurityTest {
     @Autowired
@@ -25,6 +27,14 @@ class ActuatorSecurityTest {
         mvc.perform(get("/actuator/health")).andExpect(status().isOk());
         mvc.perform(get("/actuator/info")).andExpect(status().isOk());
         mvc.perform(get("/actuator/env")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void securityErrorCarriesTheSameRequestIdAsResponseHeader() throws Exception {
+        mvc.perform(get("/actuator/env").header(RequestIdFilter.HEADER_NAME, "test-request-123"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(header().string(RequestIdFilter.HEADER_NAME, "test-request-123"))
+                .andExpect(jsonPath("$.requestId").value("test-request-123"));
     }
 
     @RestController

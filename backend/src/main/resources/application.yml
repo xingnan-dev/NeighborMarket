@@ -45,3 +45,7 @@ management:
       show-details: never
       probes:
         enabled: true
+
+logging:
+  pattern:
+    level: "%5p [requestId:%X{requestId:-}]"

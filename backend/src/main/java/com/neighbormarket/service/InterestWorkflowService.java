@@ -11,6 +11,8 @@ import com.neighbormarket.mapper.InterestViewRow;
 import com.neighbormarket.mapper.ItemInterestMapper;
 import com.neighbormarket.mapper.PickupSlotMapper;
 import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +21,7 @@ import java.util.List;
 
 @Service
 class InterestWorkflowService {
+    private static final Logger log = LoggerFactory.getLogger(InterestWorkflowService.class);
     private final ExchangeSupport support;
     private final PickupSlotMapper slots;
     private final ItemInterestMapper interests;
@@ -51,6 +54,8 @@ class InterestWorkflowService {
             throw support.error(HttpStatus.CONFLICT, "意向状态写入失败，请重试");
         if (interest.getStatus() == InterestStatus.CONFIRMED)
             throw support.error(HttpStatus.CONFLICT, "该意向已被确认");
+        log.info("Interest state changed; interestId={} itemId={} userId={} state={}",
+                interest.getId(), itemId, user.getId(), interest.getStatus());
         return support.interestView(interest, slot);
     }
 
@@ -72,6 +77,8 @@ class InterestWorkflowService {
         if (cancelled != 1) throw support.error(HttpStatus.CONFLICT, "意向状态已变化，请刷新");
         interest.setStatus(InterestStatus.CANCELLED);
         interest.setUpdatedAt(now);
+        log.info("Interest state changed; interestId={} itemId={} userId={} state={}",
+                interest.getId(), itemId, user.getId(), InterestStatus.CANCELLED);
         return support.interestView(interest, slots.selectById(interest.getSlotId()));
     }
 

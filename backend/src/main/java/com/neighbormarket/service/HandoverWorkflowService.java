@@ -14,6 +14,8 @@ import com.neighbormarket.mapper.HandoverViewRow;
 import com.neighbormarket.mapper.ItemInterestMapper;
 import com.neighbormarket.mapper.PickupSlotMapper;
 import org.springframework.http.HttpStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -22,6 +24,7 @@ import java.util.List;
 
 @Service
 class HandoverWorkflowService {
+    private static final Logger log = LoggerFactory.getLogger(HandoverWorkflowService.class);
     private final ExchangeSupport support;
     private final PickupSlotMapper slots;
     private final ItemInterestMapper interests;
@@ -85,6 +88,8 @@ class HandoverWorkflowService {
                 .set(ItemInterest::getStatus, InterestStatus.CONFIRMED)
                 .set(ItemInterest::getUpdatedAt, now));
         if (confirmed != 1) throw support.error(HttpStatus.CONFLICT, "意向状态已变化，请刷新");
+        log.info("Handover state changed; handoverId={} itemId={} publisherId={} recipientId={} state={}",
+                handover.getId(), item.getId(), publisher.getId(), interest.getUserId(), HandoverStatus.ACTIVE);
         return support.handoverView(handover);
     }
 
@@ -134,6 +139,8 @@ class HandoverWorkflowService {
                 .set(ItemInterest::getStatus, InterestStatus.CANCELLED)
                 .set(ItemInterest::getUpdatedAt, now));
         if (cancelled != 1) throw support.error(HttpStatus.CONFLICT, "意向状态与交接不一致");
+        log.info("Handover state changed; handoverId={} itemId={} actorId={} state={}",
+                id, handover.getItemId(), user.getId(), HandoverStatus.CANCELLED);
         return support.handoverView(handovers.selectById(id));
     }
 
@@ -158,6 +165,8 @@ class HandoverWorkflowService {
                 .set(Item::getStatus, ItemStatus.COMPLETED)
                 .set(Item::getCompletedAt, now));
         if (done != 1) throw support.error(HttpStatus.CONFLICT, "物品状态与交接不一致");
+        log.info("Handover state changed; handoverId={} itemId={} actorId={} state={}",
+                id, handover.getItemId(), user.getId(), HandoverStatus.COMPLETED);
         return support.handoverView(handovers.selectById(id));
     }
 }

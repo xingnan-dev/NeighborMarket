@@ -1,6 +1,8 @@
 package com.neighbormarket.web;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
@@ -37,5 +39,19 @@ class ApiExceptionHandlerTest {
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
         assertEquals("INTERNAL_ERROR", response.getBody().code());
         assertFalse(response.getBody().message().contains("secret"));
+    }
+
+    @AfterEach
+    void clearMdc() {
+        MDC.clear();
+    }
+
+    @Test
+    void errorIncludesCurrentRequestId() {
+        MDC.put(RequestIdFilter.MDC_KEY, "request-123");
+
+        var response = handler.badRequest(new IllegalArgumentException("错误"));
+
+        assertEquals("request-123", response.getBody().requestId());
     }
 }

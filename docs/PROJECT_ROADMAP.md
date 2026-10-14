@@ -376,7 +376,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-D-04 环境与密钥管理 | VERIFIED | P0 | 中 | NM-A-01、04 | 示例配置泄密 | dev/demo/test/prod 行为明确；`.env.example` 无真实秘密；缺少必需生产变量时快速失败 |
 | NM-D-05 GitHub Actions CI | DONE | P1 | 中 | NM-B-01 | Testcontainers runner 配置 | PR/push 执行后端测试、前端测试和双端构建；缓存不影响正确性；失败阻止绿色状态 |
 | NM-D-06 Actuator 健康与指标 | VERIFIED | P1 | 中 | NM-D-04 | 暴露敏感端点 | 只公开 health/info 或经授权的指标；健康状态包含 DB；不暴露 env/configprops 等敏感信息 |
-| NM-D-07 请求 ID 与日志规范 | TODO | P1 | 中 | NM-A-07 | 日志泄漏 Cookie/Prompt/密钥 | 每请求生成/透传 request ID；错误体可关联；关键状态转换有结构化字段；敏感字段脱敏 |
+| NM-D-07 请求 ID 与日志规范 | VERIFIED | P1 | 中 | NM-A-07 | 日志泄漏 Cookie/Prompt/密钥 | 每请求生成/透传 request ID；错误体可关联；关键状态转换有结构化字段；敏感字段脱敏 |
 | NM-D-08 后端覆盖率与测试分层 | TODO | P1 | 中 | Phase B | 追求数字而写低价值测试 | 单元、Web、安全、MySQL 集成测试分层；关键状态分支有测试；报告覆盖缺口而不设虚假百分比 |
 | NM-D-09 前端组件测试基础 | TODO | P1 | 中 | Phase A/C | jsdom 与浏览器差异 | 覆盖登录、详情权限、错误反馈、发布校验、重复提交；测试可在 CI 无头运行 |
 | NM-D-10 核心 E2E | TODO | P1 | 高 | NM-D-03、09 | 测试数据污染和脆弱选择器 | 独立测试库完成登录→发布→申请→确认→完成；可重复运行；不调用真实 AI |
@@ -405,6 +405,13 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-D-05 DONE：新增 GitHub Actions CI，限定只读仓库权限，并为同一引用启用旧任务取消。后端 Job 使用 Temurin Java 17 和 Maven 缓存执行 `mvn verify`；前端 Job 使用 Node.js 22 和锁文件执行 `npm ci`、13项测试及 Vite 构建；二者成功后才验证 Compose 配置并构建双端镜像。失败时保留后端测试报告7天。
 - CI 原始命令已在本机复跑：后端99项测试、0失败、0错误、0跳过且打包成功；前端13项测试全部通过并构建成功；Compose 配置校验和双镜像构建成功。工作流只有推送至 GitHub 后才能获得远端运行证据，因此当前为 DONE，不能提前标记 VERIFIED。
 - `npm audit --omit=dev` 报告3个高危项，涉及 Vue/server-renderer 的特定 XSS 公告和 `source-map-js` 的拒绝服务公告。当前未自动执行强制升级；需要单独核对本 SPA 的可达性、兼容升级版本并回归，不能为消除告警而绕过锁文件或降低测试标准。
+
+#### 2026-10-13 / 批次 D4（请求关联与关键状态日志）
+
+- NM-D-07 VERIFIED：新增最高优先级请求过滤器，合法 `X-Request-ID` 可安全透传，缺失、超长或包含控制字符的值会替换为 UUID；标识同步写入响应头、MDC 和统一 `ApiError.requestId`，并在请求结束后清理 MDC，避免线程复用污染。
+- CORS 明确允许并暴露请求 ID 头；日志级别格式包含 request ID。领取意向以及交接确认、取消、完成操作在事务成功路径记录实体 ID、操作者 ID 和目标状态，不记录用户名、Cookie、密码、地点、AI Prompt 或密钥。
+- 端到端安全测试发现请求 ID 过滤器默认顺序晚于 Spring Security，导致401响应缺少关联标识；已提升到安全链之前并加入回归断言。针对性8项通过；后端全量103项通过，0失败、0错误、0跳过。
+- Compose 后端镜像重建并滚动更新成功，三个服务均恢复 Healthy。经 Nginx 请求受保护 API 返回401，响应头和 JSON 错误体均保留同一测试 request ID，证明真实部署链路有效。
 
 ## 10. Phase E — 业务完整性完善
 

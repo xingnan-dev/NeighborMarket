@@ -3,6 +3,10 @@ package com.neighbormarket.service;
 import com.neighbormarket.domain.*;
 import com.neighbormarket.mapper.*;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.BeforeAll;
+import org.apache.ibatis.builder.MapperBuilderAssistant;
+import com.baomidou.mybatisplus.core.MybatisConfiguration;
+import com.baomidou.mybatisplus.core.metadata.TableInfoHelper;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.server.ResponseStatusException;
 import static org.junit.jupiter.api.Assertions.*;
@@ -10,6 +14,36 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class ItemServiceConfirmTest {
+    @BeforeAll
+    static void initializeMybatisMetadata() {
+        TableInfoHelper.initTableInfo(new MapperBuilderAssistant(new MybatisConfiguration(), "test"), Item.class);
+    }
+
+    @Test void missingItemCannotBeConfirmed() {
+        AppUserMapper users = mock(AppUserMapper.class);
+        ItemMapper items = mock(ItemMapper.class);
+        when(users.selectOne(any())).thenReturn(user(1L, "neighbor_a"));
+        when(items.selectById(9L)).thenReturn(null);
+
+        var error = assertThrows(ResponseStatusException.class,
+                () -> new ItemService(items, users).confirmAvailable(9L, "neighbor_a"));
+
+        assertEquals(HttpStatus.NOT_FOUND, error.getStatusCode());
+    }
+
+    @Test void concurrentChangeIsReportedWhenConditionalUpdateLoses() {
+        AppUserMapper users = mock(AppUserMapper.class);
+        ItemMapper items = mock(ItemMapper.class);
+        when(users.selectOne(any())).thenReturn(user(1L, "neighbor_a"));
+        when(items.selectById(9L)).thenReturn(item(9L, 1L, ItemStatus.AVAILABLE));
+        when(items.update(isNull(), any())).thenReturn(0);
+
+        var error = assertThrows(ResponseStatusException.class,
+                () -> new ItemService(items, users).confirmAvailable(9L, "neighbor_a"));
+
+        assertEquals(HttpStatus.CONFLICT, error.getStatusCode());
+    }
+
     @Test void reservedItemCannotBeConfirmed() {
         AppUserMapper users = mock(AppUserMapper.class);
         ItemMapper items = mock(ItemMapper.class);

@@ -93,6 +93,7 @@ npm run build
 - [docs/demo-guide.md](docs/demo-guide.md)：5 分钟面试演示脚本
 - [docs/technical-stack.md](docs/technical-stack.md)：技术栈与工程实践简介
 - [docs/deployment.md](docs/deployment.md)：环境隔离、后端镜像与健康检查约定
+- [docs/testing.md](docs/testing.md)：后端测试分层、JaCoCo 报告与覆盖率使用原则
 - [scripts/demo/README.md](scripts/demo/README.md)：演示数据备份、重建和验证说明
 - [scripts/audit/README.md](scripts/audit/README.md)：只读数据一致性审计与异常处理原则
 

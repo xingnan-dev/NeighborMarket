@@ -380,7 +380,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-D-08 后端覆盖率与测试分层 | VERIFIED | P1 | 中 | Phase B | 追求数字而写低价值测试 | 单元、Web、安全、MySQL 集成测试分层；关键状态分支有测试；报告覆盖缺口而不设虚假百分比 |
 | NM-D-09 前端组件测试基础 | VERIFIED | P1 | 中 | Phase A/C | jsdom 与浏览器差异 | 覆盖登录、详情权限、错误反馈、发布校验、重复提交；测试可在 CI 无头运行 |
 | NM-D-10 核心 E2E | VERIFIED | P1 | 高 | NM-D-03、09 | 测试数据污染和脆弱选择器 | 独立测试库完成登录→发布→申请→确认→完成；可重复运行；不调用真实 AI |
-| NM-D-11 部署 smoke test | TODO | P1 | 中 | NM-D-03、06、10 | 只验证端口未验证业务 | 新环境启动后验证健康、迁移、登录和核心 API；重启后数据保留 |
+| NM-D-11 部署 smoke test | VERIFIED | P1 | 中 | NM-D-03、06、10 | 只验证端口未验证业务 | 新环境启动后验证健康、迁移、登录和核心 API；重启后数据保留 |
 | NM-D-12 Phase D 验收与报告 | TODO | P1 | 低 | NM-D-01～11 | 本地成功但 CI 失败 | 本地与 CI 命令、镜像摘要、启动时间、测试数量和已知限制均记录 |
 
 ### Phase D 执行记录
@@ -430,6 +430,12 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-D-10 VERIFIED：引入 Playwright Chromium，以两个独立浏览器 Session 完成发布者登录/发布、领取人登录/申请、发布者确认及完成交接的真实前后端闭环。用例发布免费物品，未配置或调用付费 AI。
 - E2E 通过独立 `neighbormarket-e2e` Compose 项目、独立数据库名和独立卷运行，避免读写开发数据。测试通过后数据库实查为 `item=COMPLETED`、`item_interest=CONFIRMED`、`handover=COMPLETED` 且完成时间已记录，随后销毁隔离卷。
 - 本地 Playwright 核心用例1项通过。CI 新增独立 E2E Job，在后端与前端基础 Job 通过后构建隔离全栈、安装 Chromium、运行用例，失败时保留截图/trace，并在所有结果下执行定向清理。远端 CI 结果仍需推送后验证。
+
+#### 2026-10-16 / 批次 D8（部署 smoke 与重启恢复）
+
+- NM-D-11 VERIFIED：新增只读 `scripts/smoke-test.ps1`，验证 Vue 入口、Actuator `UP`、请求 ID、CSRF、登录、Session 保持、公开列表及已认证的“我的发布” API。口令仅从 `SMOKE_PASSWORD` 进程环境读取，脚本不修改业务数据也不输出秘密。
+- 在全新的 `neighbormarket-e2e` 隔离卷中启动三个服务，首次 smoke 通过，Flyway 实查7项成功迁移且最新版本为7。核心 E2E 生成一条 `COMPLETED` 记录后重启全套容器，三个服务均恢复 Healthy，第二次 smoke 通过，迁移历史和已完成记录仍存在。
+- CI 的核心 E2E Job 已增加新部署 smoke、浏览器闭环、整套重启及重启后持久数据 smoke。远端 CI 需在本批推送后单独确认，不提前标记为远端通过。
 
 ## 10. Phase E — 业务完整性完善
 

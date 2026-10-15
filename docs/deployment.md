@@ -58,6 +58,13 @@ docker build -t neighbormarket-backend:local backend
 
 ## 5. 已验证范围与边界
 
-2026-10-13 已实际验证：前后端镜像构建、三个服务健康依赖、7个 Flyway 迁移、前后端非 root 运行、同源页面/API/健康路由、管理端点拦截，以及 MySQL 重启后的数据卷持久化。验证使用全新的项目专属 Docker 卷，不连接或覆盖开发数据库。
+2026-10-16 已实际验证：前后端镜像构建、三个服务健康依赖、7个 Flyway 迁移、前后端非 root 运行、同源页面/API/健康路由、管理端点拦截、CSRF/登录/Session/核心列表 smoke，以及整套容器重启后的数据卷持久化。验证使用全新的项目专属 Docker 卷，不连接或覆盖开发数据库。
 
-当前仍未完成正式 HTTPS 终止、自动备份/恢复演练、登录与核心交易流程的部署 E2E；这些分别由后续生产部署和 NM-D-10/NM-D-11 任务验收。公网环境必须在 TLS 反向代理后运行，并设置 `SESSION_COOKIE_SECURE=true` 与真实 HTTPS `APP_ORIGIN`。
+部署后可以下列只读命令快速验证。口令仅通过进程环境传入，脚本不会输出口令：
+
+```powershell
+$env:SMOKE_PASSWORD='replace-with-deployment-test-user-password'
+./scripts/smoke-test.ps1 -BaseUrl 'http://127.0.0.1:8088' -Username 'neighbor_a'
+```
+
+当前仍未完成正式 HTTPS 终止和自动备份/恢复演练。公网环境必须在 TLS 反向代理后运行，并设置 `SESSION_COOKIE_SECURE=true` 与真实 HTTPS `APP_ORIGIN`。

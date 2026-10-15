@@ -136,9 +136,26 @@ jobs:
       - name: Start isolated E2E stack
         run: docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml up -d --build --wait --wait-timeout 180
 
+      - name: Smoke test fresh deployment
+        env:
+          SMOKE_PASSWORD: ${{ env.E2E_USER_A_PASSWORD }}
+        shell: pwsh
+        run: ./scripts/smoke-test.ps1 -BaseUrl $env:E2E_BASE_URL -Username neighbor_a
+
       - name: Run core browser workflow
         working-directory: frontend
         run: npm run test:e2e
+
+      - name: Restart isolated stack
+        run: |
+          docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml restart
+          docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml up -d --wait --wait-timeout 180
+
+      - name: Smoke test restarted deployment and persisted item
+        env:
+          SMOKE_PASSWORD: ${{ env.E2E_USER_A_PASSWORD }}
+        shell: pwsh
+        run: ./scripts/smoke-test.ps1 -BaseUrl $env:E2E_BASE_URL -Username neighbor_a -ExpectedMineMinimum 1
 
       - name: Upload Playwright diagnostics
         if: failure()

@@ -379,7 +379,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-D-07 请求 ID 与日志规范 | VERIFIED | P1 | 中 | NM-A-07 | 日志泄漏 Cookie/Prompt/密钥 | 每请求生成/透传 request ID；错误体可关联；关键状态转换有结构化字段；敏感字段脱敏 |
 | NM-D-08 后端覆盖率与测试分层 | VERIFIED | P1 | 中 | Phase B | 追求数字而写低价值测试 | 单元、Web、安全、MySQL 集成测试分层；关键状态分支有测试；报告覆盖缺口而不设虚假百分比 |
 | NM-D-09 前端组件测试基础 | VERIFIED | P1 | 中 | Phase A/C | jsdom 与浏览器差异 | 覆盖登录、详情权限、错误反馈、发布校验、重复提交；测试可在 CI 无头运行 |
-| NM-D-10 核心 E2E | TODO | P1 | 高 | NM-D-03、09 | 测试数据污染和脆弱选择器 | 独立测试库完成登录→发布→申请→确认→完成；可重复运行；不调用真实 AI |
+| NM-D-10 核心 E2E | VERIFIED | P1 | 高 | NM-D-03、09 | 测试数据污染和脆弱选择器 | 独立测试库完成登录→发布→申请→确认→完成；可重复运行；不调用真实 AI |
 | NM-D-11 部署 smoke test | TODO | P1 | 中 | NM-D-03、06、10 | 只验证端口未验证业务 | 新环境启动后验证健康、迁移、登录和核心 API；重启后数据保留 |
 | NM-D-12 Phase D 验收与报告 | TODO | P1 | 低 | NM-D-01～11 | 本地成功但 CI 失败 | 本地与 CI 命令、镜像摘要、启动时间、测试数量和已知限制均记录 |
 
@@ -424,6 +424,12 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-D-09 VERIFIED：引入 Vitest 4、Vue Test Utils 与 jsdom，并把原有 Node 单元测试和 Vue 组件测试显式分层，避免 Node 测试器错误加载 `.vue` 文件。CI 既有 `npm test` 命令自动覆盖两层测试。
 - 新增6项组件测试：登录必填校验、API 错误展示、安全站内跳转、登录重复提交锁定、详情页匿名/发布者权限分支、发布表单前置校验。与原有13项单元测试合计19项，全部通过。
 - Vue 从3.5.13升级至3.5.44以修复已公告的 server-renderer XSS 依赖链；更新锁文件后 `npm audit --omit=dev` 与完整安装审计均为0漏洞。未使用 `npm audit fix --force`。Vite 生产构建通过。
+
+#### 2026-10-15 / 批次 D7（核心浏览器 E2E）
+
+- NM-D-10 VERIFIED：引入 Playwright Chromium，以两个独立浏览器 Session 完成发布者登录/发布、领取人登录/申请、发布者确认及完成交接的真实前后端闭环。用例发布免费物品，未配置或调用付费 AI。
+- E2E 通过独立 `neighbormarket-e2e` Compose 项目、独立数据库名和独立卷运行，避免读写开发数据。测试通过后数据库实查为 `item=COMPLETED`、`item_interest=CONFIRMED`、`handover=COMPLETED` 且完成时间已记录，随后销毁隔离卷。
+- 本地 Playwright 核心用例1项通过。CI 新增独立 E2E Job，在后端与前端基础 Job 通过后构建隔离全栈、安装 Chromium、运行用例，失败时保留截图/trace，并在所有结果下执行定向清理。远端 CI 结果仍需推送后验证。
 
 ## 10. Phase E — 业务完整性完善
 

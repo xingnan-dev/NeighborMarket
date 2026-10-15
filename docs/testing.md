@@ -42,3 +42,26 @@ CI 会保存 JaCoCo 报告14天。新增核心业务代码时，应针对缺口�
 ## 前端测试
 
 `npm test` 先运行 `test/*.test.js` 中的 Node 单元测试，再由 Vitest + jsdom 运行 `test/component/**/*.spec.js` 组件测试。组件测试当前覆盖登录校验、错误反馈、安全跳转、重复提交、详情页匿名/发布者权限状态，以及发布表单前置校验；所有网络调用均 mock，不接触真实后端或 AI 服务。
+
+## 核心浏览器 E2E
+
+Playwright 用两个独立浏览器 Session 验证“发布者登录与发布 → 领取人登录与申请 → 发布者确认 → 完成交接”。运行环境使用 `neighbormarket-e2e` Compose 项目、独立 MySQL 卷和 `neighbor_market_e2e` 数据库，不与开发/演示环境共享数据。用例只发布免费物品，不配置也不调用真实 AI。
+
+PowerShell 本地运行示例（口令只用于该次隔离测试）：
+
+```powershell
+$env:DB_PASSWORD='replace-with-e2e-db-password'
+$env:E2E_USER_A_PASSWORD='replace-with-e2e-user-a-password'
+$env:E2E_USER_B_PASSWORD='replace-with-e2e-user-b-password'
+$env:DB_NAME='neighbor_market_e2e'
+$env:APP_PORT='18088'
+$env:APP_ORIGIN='http://127.0.0.1:18088'
+$env:E2E_BASE_URL='http://127.0.0.1:18088'
+docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml up -d --build --wait --wait-timeout 180
+cd frontend
+npm run test:e2e
+cd ..
+docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml down -v
+```
+
+最后一条命令只删除命名为 `neighbormarket-e2e` 的临时容器、网络和卷。失败时 Playwright 将诊断资料写入被 Git 忽略的 `frontend/test-results/`；CI 仅在失败时保存这些资料7天，并始终清理隔离环境。

@@ -100,3 +100,57 @@ jobs:
         env:
           DB_PASSWORD: ci-build-only-not-a-production-secret
         run: docker compose build
+
+  core-e2e:
+    name: Core browser E2E
+    needs: [backend, frontend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DB_PASSWORD: ci-e2e-db-not-a-production-secret
+      DB_NAME: neighbor_market_e2e
+      E2E_USER_A_PASSWORD: ci-e2e-user-a-not-a-production-secret
+      E2E_USER_B_PASSWORD: ci-e2e-user-b-not-a-production-secret
+      APP_PORT: '18088'
+      APP_ORIGIN: http://127.0.0.1:18088
+      E2E_BASE_URL: http://127.0.0.1:18088
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install locked dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium
+
+      - name: Start isolated E2E stack
+        run: docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml up -d --build --wait --wait-timeout 180
+
+      - name: Run core browser workflow
+        working-directory: frontend
+        run: npm run test:e2e
+
+      - name: Upload Playwright diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-diagnostics
+          path: |
+            frontend/playwright-report/
+            frontend/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Stop isolated E2E stack
+        if: always()
+        run: docker compose -p neighbormarket-e2e -f compose.yml -f compose.e2e.yml down -v

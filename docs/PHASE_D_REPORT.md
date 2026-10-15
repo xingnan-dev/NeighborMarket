@@ -2,7 +2,7 @@
 
 ## 结论
 
-Phase D 的本地实现和验收已完成：可通过 Docker Compose 启动 MySQL、Spring Boot 和 Vue/Nginx；后端、前端、组件、真实 MySQL 集成、浏览器 E2E 及部署 smoke 均有自动化证据。远端 GitHub Actions 工作流已提交，但当前本机 GitHub CLI 未登录且仓库 API 不可匿名读取，因此远端 CI 不标记为 VERIFIED。
+Phase D 已完成实现与验收：可通过 Docker Compose 启动 MySQL、Spring Boot 和 Vue/Nginx；后端、前端、组件、真实 MySQL 集成、浏览器 E2E 及部署 smoke 均有自动化证据。GitHub Actions 远端运行 `38764242106`（核心 E2E）和 `38767299683`（部署 smoke/重启持久化）均成功，因此 Phase D 可标记为 VERIFIED。
 
 ## 任务验收
 
@@ -12,14 +12,14 @@ Phase D 的本地实现和验收已完成：可通过 Docker Compose 启动 MySQ
 | NM-D-02 前端生产镜像 | VERIFIED | Nginx 非 root UID 101；SPA fallback/API 反代通过；本地镜像 77.4 MB |
 | NM-D-03 Docker Compose | VERIFIED | MySQL/后端/前端健康依赖启动；数据库不暴露宿主端口；独立卷持久化通过 |
 | NM-D-04 环境与密钥管理 | VERIFIED | prod/demo/test 边界明确；必需生产变量缺失时快速失败；仓库无真实密钥 |
-| NM-D-05 GitHub Actions CI | DONE | 工作流包含后端、前端、镜像和 E2E Job；等待 GitHub 页面的远端运行证据 |
+| NM-D-05 GitHub Actions CI | VERIFIED | 工作流包含后端、前端、镜像和 E2E Job；含 smoke/重启验证的远端运行 `38767299683` 成功 |
 | NM-D-06 Actuator | VERIFIED | 匿名 health/info 最小暴露；DB 健康反映到整体健康；敏感端点未暴露 |
 | NM-D-07 请求 ID 与日志 | VERIFIED | `X-Request-ID` 贯穿响应、MDC 和错误体；关键状态转换有结构化字段 |
 | NM-D-08 后端覆盖率 | VERIFIED | 107 项通过；JaCoCo 行 83.7%（680/812）、分支 59.9%（175/292） |
 | NM-D-09 前端组件测试 | VERIFIED | 13 项 Node 单元测试 + 6 项 Vue 组件测试全部通过 |
 | NM-D-10 核心 E2E | VERIFIED | Playwright 双 Session 完成登录→发布→申请→确认→完成；最终数据状态一致 |
 | NM-D-11 部署 smoke | VERIFIED | 新环境、重启后 smoke 均 PASS；7 项 Flyway 迁移和已完成记录在重启后保留 |
-| NM-D-12 总验收 | DONE | 本地证据已归档；仅远端 CI 状态待人工确认 |
+| NM-D-12 总验收 | VERIFIED | 本地与远端 CI 证据均已归档，Phase D 完成 |
 
 ## 2026-10-16 最终回归
 
@@ -37,7 +37,7 @@ Phase D 的本地实现和验收已完成：可通过 Docker Compose 启动 MySQ
 
 ## 已知边界
 
-- GitHub Actions 远端运行未在本机验证；需在 GitHub Actions 页面确认 `Backend tests and package`、`Frontend tests and build`、`Build container images` 和 `Core browser E2E` 全部为绿色。
+- GitHub Actions 已通过 API 核对：功能提交 `ace3e35` 对应的运行 `38767299683` 结论为 `success`。后续仍应保持 `main` 分支保护，防止未通过 CI 的改动合并。
 - JaCoCo 在 SQL 解析时会对第三方 `JSqlParser` 的超大方法输出 instrumentation 警告，不影响项目类报告或构建成功；后续可通过 JaCoCo excludes 降低日志噪声。
 - 生产 HTTPS/TLS 终止、数据库自动备份和恢复演练不在本阶段的本地完成范围内，不应声称已具备生产灾备能力。
 - E2E 仅覆盖一条最核心成功路径；权限、并发和失败路径主要由 Web/安全和 MySQL 集成测试承担。

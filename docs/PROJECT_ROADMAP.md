@@ -374,14 +374,14 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-D-02 前端生产镜像 | VERIFIED | P1 | 中 | Phase A | SPA 路由刷新 404、代理错误 | 静态资源生产构建；history fallback；API 反代正确；非 root 或最小权限 |
 | NM-D-03 Docker Compose | VERIFIED | P1 | 中高 | NM-D-01、02、B-02 | 健康依赖和卷配置不稳定 | 应用、前端、MySQL 一条命令启动；持久卷保留数据；无默认生产密码；等待健康而非固定 sleep |
 | NM-D-04 环境与密钥管理 | VERIFIED | P0 | 中 | NM-A-01、04 | 示例配置泄密 | dev/demo/test/prod 行为明确；`.env.example` 无真实秘密；缺少必需生产变量时快速失败 |
-| NM-D-05 GitHub Actions CI | DONE | P1 | 中 | NM-B-01 | Testcontainers runner 配置 | PR/push 执行后端测试、前端测试和双端构建；缓存不影响正确性；失败阻止绿色状态 |
+| NM-D-05 GitHub Actions CI | VERIFIED | P1 | 中 | NM-B-01 | Testcontainers runner 配置 | PR/push 执行后端测试、前端测试和双端构建；缓存不影响正确性；失败阻止绿色状态 |
 | NM-D-06 Actuator 健康与指标 | VERIFIED | P1 | 中 | NM-D-04 | 暴露敏感端点 | 只公开 health/info 或经授权的指标；健康状态包含 DB；不暴露 env/configprops 等敏感信息 |
 | NM-D-07 请求 ID 与日志规范 | VERIFIED | P1 | 中 | NM-A-07 | 日志泄漏 Cookie/Prompt/密钥 | 每请求生成/透传 request ID；错误体可关联；关键状态转换有结构化字段；敏感字段脱敏 |
 | NM-D-08 后端覆盖率与测试分层 | VERIFIED | P1 | 中 | Phase B | 追求数字而写低价值测试 | 单元、Web、安全、MySQL 集成测试分层；关键状态分支有测试；报告覆盖缺口而不设虚假百分比 |
 | NM-D-09 前端组件测试基础 | VERIFIED | P1 | 中 | Phase A/C | jsdom 与浏览器差异 | 覆盖登录、详情权限、错误反馈、发布校验、重复提交；测试可在 CI 无头运行 |
 | NM-D-10 核心 E2E | VERIFIED | P1 | 高 | NM-D-03、09 | 测试数据污染和脆弱选择器 | 独立测试库完成登录→发布→申请→确认→完成；可重复运行；不调用真实 AI |
 | NM-D-11 部署 smoke test | VERIFIED | P1 | 中 | NM-D-03、06、10 | 只验证端口未验证业务 | 新环境启动后验证健康、迁移、登录和核心 API；重启后数据保留 |
-| NM-D-12 Phase D 验收与报告 | DONE | P1 | 低 | NM-D-01～11 | 本地成功但 CI 失败 | 本地与 CI 命令、镜像摘要、启动时间、测试数量和已知限制均记录 |
+| NM-D-12 Phase D 验收与报告 | VERIFIED | P1 | 低 | NM-D-01～11 | 本地成功但 CI 失败 | 本地与 CI 命令、镜像摘要、启动时间、测试数量和已知限制均记录 |
 
 ### Phase D 执行记录
 
@@ -441,7 +441,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 
 - NM-D-12 DONE：完成 Phase D 本地总验收并新增 `docs/PHASE_D_REPORT.md`，记录各任务证据、执行命令、镜像大小、启动/重启时间、已知边界和下一阶段入口。
 - 最终后端 `mvn verify` 运行107项测试，0失败、0错误、0跳过，JAR 和 JaCoCo 报告生成成功；行覆盖率83.7%（680/812），分支覆盖率59.9%（175/292）。前端13项单元测试和6项组件测试通过，Vite 构建通过，生产依赖审计0漏洞。
-- 常规 Compose 三个容器均为 Healthy；后端镜像335 MB、前端镜像77.4 MB，且运行用户为非 root。NM-D-05 和 NM-D-12 保持 DONE：远端 GitHub Actions 因本机 CLI 未登录且仓库无法匿名读取，尚无可采信的远端绿色证据，不提前标记 VERIFIED。
+- 常规 Compose 三个容器均为 Healthy；后端镜像335 MB、前端镜像77.4 MB，且运行用户为非 root。GitHub Actions 通过已保存凭据的 API 只读查询完成核对：核心 E2E 运行 `38764242106` 和包含部署 smoke/重启持久化的运行 `38767299683` 均为 `success`，因此 NM-D-05、NM-D-12 及 Phase D 整体标记 VERIFIED。
 
 ## 10. Phase E — 业务完整性完善
 

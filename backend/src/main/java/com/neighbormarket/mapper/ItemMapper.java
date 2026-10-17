@@ -16,7 +16,7 @@ public interface ItemMapper extends BaseMapper<Item> {
                    (SELECT u.nickname FROM app_user u WHERE u.id = i.publisher_id) AS publisher_nickname,
                    i.title, i.description, i.category, i.trade_type, i.price,
                    i.image_url, i.status, i.published_at, i.last_confirmed_at,
-                   i.completed_at, i.pickup_location, i.current_handover_id
+                   i.completed_at, i.pickup_location, i.current_handover_id, i.version
             FROM item i
             WHERE i.status = #{status}
             <if test="keyword != null and keyword != ''">
@@ -43,7 +43,7 @@ public interface ItemMapper extends BaseMapper<Item> {
                    (SELECT u.nickname FROM app_user u WHERE u.id = i.publisher_id) AS publisher_nickname,
                    i.title, i.description, i.category, i.trade_type, i.price,
                    i.image_url, i.status, i.published_at, i.last_confirmed_at,
-                   i.completed_at, i.pickup_location, i.current_handover_id
+                   i.completed_at, i.pickup_location, i.current_handover_id, i.version
             FROM item i
             WHERE i.publisher_id = #{publisherId}
             ORDER BY i.published_at DESC, i.id DESC

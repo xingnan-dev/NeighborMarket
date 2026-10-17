@@ -79,6 +79,7 @@ public class ItemService {
         item.setPublishedAt(now);
         item.setLastConfirmedAt(now);
         item.setPickupLocation(command.pickupLocation().trim());
+        item.setVersion(0L);
         items.insert(item);
         exchange.addInitialSlots(item, command.slots());
         return view(item);
@@ -144,7 +145,7 @@ public class ItemService {
                 item.getId(), item.getTitle(), item.getDescription(), item.getCategory(),
                 item.getTradeType(), item.getPrice(), item.getImageUrl(), item.getStatus(),
                 item.getPublishedAt(), item.getLastConfirmedAt(), item.getCompletedAt(),
-                item.getPickupLocation(), item.getCurrentHandoverId(),
+                item.getPickupLocation(), item.getCurrentHandoverId(), item.getVersion(),
                 new PublisherView(publisher.getId(), publisher.getNickname()));
     }
 
@@ -153,7 +154,7 @@ public class ItemService {
                 item.getId(), item.getTitle(), item.getDescription(), item.getCategory(),
                 item.getTradeType(), item.getPrice(), item.getImageUrl(), item.getStatus(),
                 item.getPublishedAt(), item.getLastConfirmedAt(), item.getCompletedAt(),
-                item.getPickupLocation(), item.getCurrentHandoverId(),
+                item.getPickupLocation(), item.getCurrentHandoverId(), item.getVersion(),
                 new PublisherView(item.getPublisherId(), item.getPublisherNickname()));
     }
 
@@ -171,11 +172,12 @@ public class ItemService {
             LocalDateTime completedAt,
             String pickupLocation,
             Long currentHandoverId,
+            Long version,
             PublisherView publisher) {
         LocalDateTime now = LocalDateTime.now();
         return new ItemView(
                 id, title, description, category, tradeType, price, imageUrl, status,
-                publishedAt, lastConfirmedAt, completedAt, pickupLocation, currentHandoverId,
+                publishedAt, lastConfirmedAt, completedAt, pickupLocation, currentHandoverId, version,
                 FreshnessRules.label(publishedAt, now),
                 FreshnessRules.isConfirmationStale(lastConfirmedAt, now),
                 DISPLAY_TIME_ZONE, publisher);
@@ -198,6 +200,7 @@ public class ItemService {
             LocalDateTime completedAt,
             String pickupLocation,
             Long currentHandoverId,
+            Long version,
             String freshnessLabel,
             boolean confirmationStale,
             String displayTimeZone,

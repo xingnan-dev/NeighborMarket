@@ -22,6 +22,7 @@ public class Item {
     private LocalDateTime completedAt;
     private String pickupLocation;
     private Long currentHandoverId;
+    private Long version;
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public Long getPublisherId() { return publisherId; }
@@ -50,4 +51,6 @@ public class Item {
     public void setPickupLocation(String pickupLocation) { this.pickupLocation = pickupLocation; }
     public Long getCurrentHandoverId() { return currentHandoverId; }
     public void setCurrentHandoverId(Long currentHandoverId) { this.currentHandoverId = currentHandoverId; }
+    public Long getVersion() { return version; }
+    public void setVersion(Long version) { this.version = version; }
 }

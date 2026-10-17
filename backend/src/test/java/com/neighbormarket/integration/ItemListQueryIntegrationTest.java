@@ -57,13 +57,13 @@ class ItemListQueryIntegrationTest {
             jdbc.update("""
                     INSERT INTO item(
                         id, publisher_id, title, description, category, trade_type, price,
-                        image_url, status, published_at, last_confirmed_at, pickup_location
+                        image_url, status, published_at, last_confirmed_at, pickup_location, version
                     ) VALUES (?, ?, ?, ?, ?, 'FREE', 0, '/test.jpg', 'AVAILABLE',
                               TIMESTAMP('2026-01-01 00:00:00') + INTERVAL ? MINUTE,
-                              '2026-01-02 00:00:00', '测试门口')
+                              '2026-01-02 00:00:00', '测试门口', ?)
                     """, id, id % 2 == 0 ? 1 : 2, "物品 " + id,
                     id % 3 == 0 ? "含关键词的描述" : "普通描述",
-                    id % 2 == 0 ? "书籍" : "其他", id);
+                    id % 2 == 0 ? "书籍" : "其他", id, id);
         }
         queryCounter.reset();
     }
@@ -73,6 +73,7 @@ class ItemListQueryIntegrationTest {
         var one = itemService.market(new Page<Item>(1, 1), null, null, null, null);
         assertEquals(2, queryCounter.count(), "pagination should execute one count and one joined page query");
         assertEquals("发布者一", one.getRecords().get(0).publisher().nickname());
+        assertEquals(20L, one.getRecords().get(0).version());
 
         queryCounter.reset();
         var twelve = itemService.market(new Page<Item>(1, 12), null, null, null, null);
@@ -98,6 +99,7 @@ class ItemListQueryIntegrationTest {
         var one = itemService.mine(new Page<Item>(1, 1), "owner_one");
         assertEquals(3, queryCounter.count());
         assertEquals("发布者一", one.getRecords().get(0).publisher().nickname());
+        assertEquals(20L, one.getRecords().get(0).version());
 
         queryCounter.reset();
         var ten = itemService.mine(new Page<Item>(1, 10), "owner_one");

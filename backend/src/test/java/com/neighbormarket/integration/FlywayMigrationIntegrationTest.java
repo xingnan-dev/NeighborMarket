@@ -40,11 +40,11 @@ class FlywayMigrationIntegrationTest {
     }
 
     @Test
-    void emptyDatabaseMigratesThroughV7WithExpectedConstraintsAndIndexes() throws Exception {
+    void emptyDatabaseMigratesThroughV8WithExpectedConstraintsAndIndexes() throws Exception {
         var result = flyway(null).migrate();
 
-        assertEquals(7, result.migrationsExecuted);
-        assertEquals("7", result.targetSchemaVersion);
+        assertEquals(8, result.migrationsExecuted);
+        assertEquals("8", result.targetSchemaVersion);
         assertEquals(0, flyway(null).migrate().migrationsExecuted,
                 "re-running Flyway on an up-to-date schema must be a no-op");
         try (Connection connection = connection()) {
@@ -115,6 +115,45 @@ class FlywayMigrationIntegrationTest {
                           'fk_item_current_handover_same_item'
                       )
                     """));
+            assertEquals(1, count(connection, """
+                    SELECT COUNT(*)
+                    FROM information_schema.columns
+                    WHERE table_schema = DATABASE()
+                      AND table_name = 'item'
+                      AND column_name = 'version'
+                      AND column_default = '0'
+                      AND is_nullable = 'NO'
+                      AND data_type = 'bigint'
+                    """));
+            assertEquals(1, count(connection, """
+                    SELECT COUNT(*)
+                    FROM information_schema.table_constraints
+                    WHERE constraint_schema = DATABASE()
+                      AND constraint_name = 'chk_item_version'
+                      AND constraint_type = 'CHECK'
+                    """));
+        }
+    }
+
+    @Test
+    void v7ToV8UpgradePreservesItemsAndInitializesVersion() throws Exception {
+        flyway(MigrationVersion.fromVersion("7")).migrate();
+        long itemId;
+        try (Connection connection = connection()) {
+            long ownerId = insertAndReturnId(connection,
+                    "INSERT INTO app_user(username,password_hash,nickname) VALUES ('v8_owner','test-hash','发布者')");
+            itemId = insertItem(connection, ownerId, "V8 版本升级物品");
+        }
+
+        var result = flyway(null).migrate();
+
+        assertEquals(1, result.migrationsExecuted);
+        assertEquals("8", result.targetSchemaVersion);
+        try (Connection connection = connection()) {
+            assertEquals(1, count(connection,
+                    "SELECT COUNT(*) FROM item WHERE id = ? AND version = 0", itemId));
+            assertSqlRejected(connection,
+                    "UPDATE item SET version = -1 WHERE id = ?", itemId);
         }
     }
 
@@ -183,7 +222,7 @@ class FlywayMigrationIntegrationTest {
                     handoverId, itemId);
         }
 
-        var result = flyway(null).migrate();
+        var result = flyway(MigrationVersion.fromVersion("7")).migrate();
 
         assertEquals(1, result.migrationsExecuted);
         assertEquals("7", result.targetSchemaVersion);
@@ -283,7 +322,8 @@ class FlywayMigrationIntegrationTest {
                     """, firstItem, recipientId, secondSlot);
         }
 
-        FlywayException failure = assertThrows(FlywayException.class, () -> flyway(null).migrate());
+        FlywayException failure = assertThrows(FlywayException.class,
+                () -> flyway(MigrationVersion.fromVersion("7")).migrate());
         assertTrue(hasCauseMessage(failure, "nm_v7_blocked_inconsistent_existing_data"));
 
         try (Connection connection = connection()) {
@@ -302,10 +342,11 @@ class FlywayMigrationIntegrationTest {
         }
 
         FlywayValidateException validationFailure = assertThrows(
-                FlywayValidateException.class, () -> flyway(null).migrate());
+                FlywayValidateException.class,
+                () -> flyway(MigrationVersion.fromVersion("7")).migrate());
         assertTrue(validationFailure.getMessage().contains("Detected failed migration to version 7"));
-        flyway(null).repair();
-        var retry = flyway(null).migrate();
+        flyway(MigrationVersion.fromVersion("7")).repair();
+        var retry = flyway(MigrationVersion.fromVersion("7")).migrate();
         assertEquals(1, retry.migrationsExecuted,
                 "after data is corrected and Flyway history repaired, V7 must apply cleanly");
         assertEquals("7", retry.targetSchemaVersion);

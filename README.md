@@ -89,6 +89,7 @@ npm run build
 - [docs/architecture.md](docs/architecture.md)：最终系统架构与边界
 - [docs/er.md](docs/er.md)：V1～V7 对应的实体关系与关键约束
 - [docs/IMAGE_STORAGE_AND_SECURITY.md](docs/IMAGE_STORAGE_AND_SECURITY.md)：图片存储抽象、上传限制、威胁模型与生命周期规则
+- [docs/STATE_TRANSITION_AUDIT.md](docs/STATE_TRANSITION_AUDIT.md)：物品、意向与交接的状态转换、权限及409边界
 - [docs/PHASE_B_ACCEPTANCE_REPORT.md](docs/PHASE_B_ACCEPTANCE_REPORT.md)：事务、并发、幂等与数据库可靠性验收证据
 - [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md)：可复现数据集、SQL 执行计划与优化前基线
 - [docs/stage-4.md](docs/stage-4.md)：AI 估价协议与校验记录

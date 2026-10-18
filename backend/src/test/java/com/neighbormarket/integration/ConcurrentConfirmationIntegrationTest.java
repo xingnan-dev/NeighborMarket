@@ -1,6 +1,9 @@
 package com.neighbormarket.integration;
 
+import com.neighbormarket.domain.TradeType;
 import com.neighbormarket.service.ExchangeService;
+import com.neighbormarket.service.ItemService;
+import com.neighbormarket.service.UpdateItemCommand;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.RepeatedTest;
@@ -16,6 +19,8 @@ import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -47,6 +52,9 @@ class ConcurrentConfirmationIntegrationTest {
 
     @Autowired
     ExchangeService exchangeService;
+
+    @Autowired
+    ItemService itemService;
 
     @Autowired
     JdbcTemplate jdbc;
@@ -218,6 +226,61 @@ class ConcurrentConfirmationIntegrationTest {
                 """));
     }
 
+    @RepeatedTest(5)
+    void concurrentEditAndApplicationAllowExactlyOneVersionConsistentWinner() throws Exception {
+        jdbc.update("DELETE FROM item_interest");
+        long itemId = jdbc.queryForObject(
+                "SELECT id FROM item WHERE title = '并发确认测试物品'", Long.class);
+        long slotId = jdbc.queryForObject(
+                "SELECT id FROM pickup_slot WHERE item_id = ? AND active = TRUE", Long.class, itemId);
+        LocalDateTime start = LocalDateTime.now().plusDays(4);
+        UpdateItemCommand edit = new UpdateItemCommand(
+                0L, "编辑后的物品", "并发编辑后的描述", "其他", TradeType.FIXED_PRICE,
+                new BigDecimal("9.90"), "新测试门口",
+                List.of(new ExchangeService.SlotInput(start, start.plusHours(1))));
+        CountDownLatch ready = new CountDownLatch(2);
+        CountDownLatch startRace = new CountDownLatch(1);
+        var executor = Executors.newFixedThreadPool(2);
+
+        try {
+            Future<RaceOutcome> editing = executor.submit(() -> {
+                ready.countDown();
+                startRace.await();
+                try {
+                    itemService.update(itemId, edit, "concurrent_owner");
+                    return RaceOutcome.SUCCESS;
+                } catch (ResponseStatusException exception) {
+                    if (exception.getStatusCode() == HttpStatus.CONFLICT) return RaceOutcome.CONFLICT;
+                    throw exception;
+                }
+            });
+            Future<RaceOutcome> applying = executor.submit(() -> {
+                ready.countDown();
+                startRace.await();
+                try {
+                    exchangeService.want(itemId, slotId, 0L, "concurrent_applicant");
+                    return RaceOutcome.SUCCESS;
+                } catch (ResponseStatusException exception) {
+                    if (exception.getStatusCode() == HttpStatus.CONFLICT) return RaceOutcome.CONFLICT;
+                    throw exception;
+                }
+            });
+            assertTrue(ready.await(10, TimeUnit.SECONDS));
+            startRace.countDown();
+            List<RaceOutcome> outcomes = List.of(
+                    editing.get(10, TimeUnit.SECONDS), applying.get(10, TimeUnit.SECONDS));
+            assertEquals(1, outcomes.stream().filter(outcome -> outcome == RaceOutcome.SUCCESS).count());
+            assertEquals(1, outcomes.stream().filter(outcome -> outcome == RaceOutcome.CONFLICT).count());
+        } finally {
+            startRace.countDown();
+            executor.shutdownNow();
+        }
+
+        long version = jdbc.queryForObject("SELECT version FROM item WHERE id = ?", Long.class, itemId);
+        int waiting = count("SELECT COUNT(*) FROM item_interest WHERE status = 'WAITING'");
+        assertTrue((version == 1L && waiting == 0) || (version == 0L && waiting == 1));
+    }
+
     @Test
     void retryCannotOverwriteConfirmedInterest() {
         long itemId = jdbc.queryForObject(
@@ -231,7 +294,7 @@ class ConcurrentConfirmationIntegrationTest {
                 "SELECT id FROM item_interest WHERE item_id = ? AND user_id = ?", Long.class, itemId, applicantId);
 
         ResponseStatusException exception = assertThrows(ResponseStatusException.class,
-                () -> exchangeService.want(itemId, slotId, "concurrent_applicant"));
+                () -> exchangeService.want(itemId, slotId, 0L, "concurrent_applicant"));
         assertEquals(HttpStatus.CONFLICT, exception.getStatusCode());
 
         assertEquals("CONFIRMED", jdbc.queryForObject(
@@ -353,7 +416,7 @@ class ConcurrentConfirmationIntegrationTest {
             throws InterruptedException {
         ready.countDown();
         start.await();
-        return exchangeService.want(itemId, slotId, "concurrent_applicant").id();
+        return exchangeService.want(itemId, slotId, 0L, "concurrent_applicant").id();
     }
 
     private TerminalOutcome cancelAfterBarrier(long handoverId, CountDownLatch ready, CountDownLatch start)
@@ -441,6 +504,8 @@ class ConcurrentConfirmationIntegrationTest {
     }
 
     private enum Outcome { SUCCESS, CONFLICT }
+
+    private enum RaceOutcome { SUCCESS, CONFLICT }
 
     private record TerminalOutcome(boolean successful) {}
 }

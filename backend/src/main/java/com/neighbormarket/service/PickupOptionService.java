@@ -2,9 +2,7 @@ package com.neighbormarket.service;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.neighbormarket.domain.AppUser;
-import com.neighbormarket.domain.InterestStatus;
 import com.neighbormarket.domain.Item;
-import com.neighbormarket.domain.ItemInterest;
 import com.neighbormarket.domain.ItemStatus;
 import com.neighbormarket.domain.PickupSlot;
 import com.neighbormarket.mapper.ItemInterestMapper;
@@ -50,9 +48,7 @@ class PickupOptionService {
         if (item.getStatus() != ItemStatus.AVAILABLE)
             throw support.error(HttpStatus.CONFLICT, "待交接或已送出物品不能修改时段");
         validateLocationAndInput(location, input);
-        if (interests.selectCount(Wrappers.lambdaQuery(ItemInterest.class)
-                .eq(ItemInterest::getItemId, itemId)
-                .eq(ItemInterest::getStatus, InterestStatus.WAITING)) > 0)
+        if (hasWaitingInterest(itemId))
             throw support.error(HttpStatus.CONFLICT, "已有等待意向，不能修改时段");
 
         LocalDateTime now = LocalDateTime.now();
@@ -74,6 +70,21 @@ class PickupOptionService {
             validateSlot(slot, now);
             insertSlot(item.getId(), slot, now);
         });
+    }
+
+    boolean hasWaitingInterest(Long itemId) {
+        return interests.selectWaitingIdForUpdate(itemId) != null;
+    }
+
+    void replaceForEdit(Long itemId, String location, List<ExchangeService.SlotInput> input) {
+        validateLocationAndInput(location, input);
+        LocalDateTime now = LocalDateTime.now();
+        input.forEach(slot -> validateSlot(slot, now));
+        slots.update(null, Wrappers.lambdaUpdate(PickupSlot.class)
+                .eq(PickupSlot::getItemId, itemId)
+                .eq(PickupSlot::getActive, true)
+                .set(PickupSlot::getActive, false));
+        input.forEach(slot -> insertSlot(itemId, slot, now));
     }
 
     private void validateLocationAndInput(String location, List<ExchangeService.SlotInput> input) {

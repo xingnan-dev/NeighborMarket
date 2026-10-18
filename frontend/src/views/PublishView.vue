@@ -3,6 +3,7 @@ import { onUnmounted, reactive, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { api, messageOf } from '../api'
 import { applyRecommendedPrice, buildPublishPayload } from '../pricing'
+import { validateItemForm } from '../itemForm'
 import { createLatestRequest } from '../latestRequest'
 
 const router = useRouter()
@@ -96,18 +97,8 @@ function useRecommended() {
 async function submit() {
   if (busy.value) return
   error.value = ''
-  if (!form.title.trim() || !form.description.trim() || !form.pickupLocation.trim()) {
-    error.value = '请完整填写物品与公共交接地点'
-    return
-  }
-  if (form.tradeType === 'FIXED_PRICE' && (!form.price || Number(form.price) <= 0)) {
-    error.value = '标价必须大于0元'
-    return
-  }
-  if (form.slots.some((slot) => !slot.startAt || !slot.endAt || slot.endAt <= slot.startAt)) {
-    error.value = '请填写有效的未来时段'
-    return
-  }
+  error.value = validateItemForm(form)
+  if (error.value) return
   busy.value = true
   try {
     const payload = buildPublishPayload(form)

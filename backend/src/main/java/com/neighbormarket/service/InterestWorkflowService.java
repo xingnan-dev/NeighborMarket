@@ -34,13 +34,17 @@ class InterestWorkflowService {
     }
 
     @Transactional
-    ExchangeService.InterestView want(Long itemId, Long slotId, String username) {
+    ExchangeService.InterestView want(
+            Long itemId, Long slotId, Long expectedItemVersion, String username) {
         AppUser user = support.user(username);
-        Item item = support.item(itemId);
+        Item item = support.items.selectByIdForUpdate(itemId);
+        if (item == null) throw support.error(HttpStatus.NOT_FOUND, "物品不存在");
         if (item.getPublisherId().equals(user.getId()))
             throw support.error(HttpStatus.FORBIDDEN, "不能想要自己发布的物品");
         if (item.getStatus() != ItemStatus.AVAILABLE)
             throw support.error(HttpStatus.CONFLICT, "物品当前不可领取");
+        if (!item.getVersion().equals(expectedItemVersion))
+            throw support.error(HttpStatus.CONFLICT, "物品已被修改，请刷新后重试");
         PickupSlot slot = slots.selectById(slotId);
         if (slot == null || !slot.getItemId().equals(itemId))
             throw support.error(HttpStatus.BAD_REQUEST, "时段不属于该物品");

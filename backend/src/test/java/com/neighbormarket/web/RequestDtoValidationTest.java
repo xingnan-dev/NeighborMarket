@@ -49,9 +49,12 @@ class RequestDtoValidationTest {
         assertThat(validator.validate(pickupOptions))
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .containsExactly("slots[0].endAt");
-        assertThat(validator.validate(new ExchangeRequests.WantItem(0L)))
+        assertThat(validator.validate(new ExchangeRequests.WantItem(0L, 0L)))
                 .extracting(violation -> violation.getPropertyPath().toString())
                 .containsExactly("slotId");
+        assertThat(validator.validate(new ExchangeRequests.WantItem(1L, -1L)))
+                .extracting(violation -> violation.getPropertyPath().toString())
+                .containsExactly("expectedItemVersion");
     }
 
     @Test

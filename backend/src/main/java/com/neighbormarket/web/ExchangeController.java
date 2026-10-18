@@ -41,7 +41,7 @@ public class ExchangeController {
             @PathVariable Long id,
             @Valid @RequestBody ExchangeRequests.WantItem body,
             Authentication authentication) {
-        return service.want(id, body.slotId(), authentication.getName());
+        return service.want(id, body.slotId(), body.expectedItemVersion(), authentication.getName());
     }
 
     @DeleteMapping("/items/{id}/interests/mine")

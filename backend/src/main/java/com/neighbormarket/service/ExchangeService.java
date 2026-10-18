@@ -92,8 +92,16 @@ public class ExchangeService {
         pickupOptions.addInitialSlots(item, input);
     }
 
-    public InterestView want(Long itemId, Long slotId, String username) {
-        return interests.want(itemId, slotId, username);
+    boolean hasWaitingInterest(Long itemId) {
+        return pickupOptions.hasWaitingInterest(itemId);
+    }
+
+    void replaceSlotsForEdit(Long itemId, String location, List<SlotInput> input) {
+        pickupOptions.replaceForEdit(itemId, location, input);
+    }
+
+    public InterestView want(Long itemId, Long slotId, Long expectedItemVersion, String username) {
+        return interests.want(itemId, slotId, expectedItemVersion, username);
     }
 
     public InterestView cancelInterest(Long itemId, String username) {

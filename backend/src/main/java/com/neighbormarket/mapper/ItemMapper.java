@@ -7,9 +7,27 @@ import com.neighbormarket.domain.TradeType;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
 
 @Mapper
 public interface ItemMapper extends BaseMapper<Item> {
+    @Select("SELECT * FROM item WHERE id = #{id} FOR UPDATE")
+    Item selectByIdForUpdate(@Param("id") Long id);
+
+    @Update("""
+            UPDATE item
+            SET title = #{item.title}, description = #{item.description},
+                category = #{item.category}, trade_type = #{item.tradeType},
+                price = #{item.price}, pickup_location = #{item.pickupLocation},
+                version = version + 1
+            WHERE id = #{item.id}
+              AND publisher_id = #{item.publisherId}
+              AND status = 'AVAILABLE'
+              AND version = #{expectedVersion}
+            """)
+    int updateEditableFields(@Param("item") Item item,
+                             @Param("expectedVersion") Long expectedVersion);
+
     @Select("""
             <script>
             SELECT i.id, i.publisher_id,

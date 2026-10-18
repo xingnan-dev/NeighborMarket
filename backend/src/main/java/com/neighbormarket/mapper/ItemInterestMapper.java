@@ -35,6 +35,16 @@ public interface ItemInterestMapper extends BaseMapper<ItemInterest> {
                                               @Param("userId") Long userId);
 
     @Select("""
+            SELECT id
+            FROM item_interest
+            WHERE item_id = #{itemId} AND status = 'WAITING'
+            ORDER BY id
+            LIMIT 1
+            FOR UPDATE
+            """)
+    Long selectWaitingIdForUpdate(@Param("itemId") Long itemId);
+
+    @Select("""
             SELECT ii.id, ii.item_id, ii.user_id, ii.slot_id, ii.status,
                    ii.created_at, ii.updated_at,
                    i.title AS item_title, u.nickname,

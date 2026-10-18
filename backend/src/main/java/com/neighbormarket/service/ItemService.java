@@ -91,6 +91,41 @@ public class ItemService {
     }
 
     @Transactional
+    public ItemView update(Long id, UpdateItemCommand command, String username) {
+        AppUser publisher = findUser(username);
+        Item item = items.selectByIdForUpdate(id);
+        if (item == null) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "物品不存在");
+        }
+        if (!item.getPublisherId().equals(publisher.getId())) {
+            throw new ResponseStatusException(HttpStatus.FORBIDDEN, "只有发布者可以编辑物品");
+        }
+        if (item.getStatus() != ItemStatus.AVAILABLE) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "只有可领取物品可以编辑");
+        }
+        if (!item.getVersion().equals(command.expectedVersion())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "物品已被修改，请刷新后重试");
+        }
+        if (exchange.hasWaitingInterest(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "已有等待意向，不能编辑物品");
+        }
+
+        BigDecimal price = normalizePrice(command.tradeType(), command.price());
+        item.setTitle(command.title().trim());
+        item.setDescription(command.description().trim());
+        item.setCategory(command.category().trim());
+        item.setTradeType(command.tradeType());
+        item.setPrice(price);
+        item.setPickupLocation(command.pickupLocation().trim());
+        int changed = items.updateEditableFields(item, command.expectedVersion());
+        if (changed != 1) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "物品状态已变化，请刷新后重试");
+        }
+        exchange.replaceSlotsForEdit(id, command.pickupLocation(), command.slots());
+        return view(items.selectById(id));
+    }
+
+    @Transactional
     public ItemView confirmAvailable(Long id, String username) {
         AppUser user = findUser(username);
         Item item = items.selectById(id);

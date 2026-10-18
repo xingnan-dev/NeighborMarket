@@ -11,6 +11,10 @@ spring:
     encoding: UTF-8
   jackson:
     time-zone: Asia/Shanghai
+  servlet:
+    multipart:
+      max-file-size: 8MB
+      max-request-size: 9MB
 server:
   address: ${SERVER_ADDRESS:127.0.0.1}
   port: 8080
@@ -30,6 +34,13 @@ app:
       password: ${DEMO_USER_A_PASSWORD:}
     user-b:
       password: ${DEMO_USER_B_PASSWORD:}
+  image:
+    filesystem-root: ${APP_IMAGE_FILESYSTEM_ROOT:${java.io.tmpdir}/neighbormarket-images}
+    max-bytes: 8388608
+    min-dimension: 64
+    max-dimension: 6000
+    max-pixels: 20000000
+    max-concurrent-decodes: 2
 llm:
   api-key: ${LLM_API_KEY:}
   base-url: ${LLM_BASE_URL:}

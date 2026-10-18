@@ -6,6 +6,7 @@ NeighborMarket 是一个面向社区闲置物品流转的最终面试展示版�
 
 - Session 登录与两个本地演示账号（neighbor_a、neighbor_b）
 - 物品发布、名称搜索、分类筛选、交易方式筛选和状态筛选
+- 物品编辑及 JPEG/PNG 主图选择、预览、上传、替换和删除
 - 24/72 小时新鲜度提示，以及发布者确认“还在”
 - 想要、取消想要和重新申请
 - 公共交接地点与 1～5 个未来交接时段
@@ -87,6 +88,7 @@ npm run build
 
 - [docs/architecture.md](docs/architecture.md)：最终系统架构与边界
 - [docs/er.md](docs/er.md)：V1～V7 对应的实体关系与关键约束
+- [docs/IMAGE_STORAGE_AND_SECURITY.md](docs/IMAGE_STORAGE_AND_SECURITY.md)：图片存储抽象、上传限制、威胁模型与生命周期规则
 - [docs/PHASE_B_ACCEPTANCE_REPORT.md](docs/PHASE_B_ACCEPTANCE_REPORT.md)：事务、并发、幂等与数据库可靠性验收证据
 - [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md)：可复现数据集、SQL 执行计划与优化前基线
 - [docs/stage-4.md](docs/stage-4.md)：AI 估价协议与校验记录
@@ -103,7 +105,7 @@ npm run build
 
 ## 已知限制
 
-- 当前未实现图片上传，演示使用 frontend/public/demo/ 下的本地静态图片。
+- 后端已支持单张 JPEG/PNG 主图上传、替换和删除；演示数据仍使用 frontend/public/demo/ 下的本地静态图片。
 - Session 写操作使用 Cookie CSRF Token；前端启动时获取令牌并由 Axios 通过 `X-XSRF-TOKEN` 回传。
 - AI 估价不代表实时二手市场成交价，仅提供辅助参考。
 - 尚未配置正式公网生产部署、域名、TLS 和生产级监控。

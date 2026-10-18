@@ -55,7 +55,7 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource(@Value("${app.allowed-origins}") String origins) {
         var config = new CorsConfiguration();
         config.setAllowedOrigins(List.of(origins.split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "DELETE", "OPTIONS"));
+        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Content-Type", "X-XSRF-TOKEN", "X-Request-ID"));
         config.setExposedHeaders(List.of("X-Request-ID"));
         config.setAllowCredentials(true);
@@ -79,6 +79,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/actuator/health", "/actuator/health/**", "/actuator/info").permitAll()
                         .requestMatchers("/api/auth/login", "/api/auth/csrf", "/error").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/media/items/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/items", "/api/items/detail/*", "/api/items/*/slots", "/api/items/*/comments", "/api/dashboard").permitAll()
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors

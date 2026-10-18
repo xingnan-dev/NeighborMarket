@@ -28,6 +28,19 @@ public class ApiExceptionHandler {
         return ResponseEntity.badRequest().body(new ApiError("BAD_REQUEST", "请求内容格式不正确"));
     }
 
+    @ExceptionHandler(org.springframework.web.multipart.MaxUploadSizeExceededException.class)
+    ResponseEntity<ApiError> uploadTooLarge() {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(new ApiError("IMAGE_TOO_LARGE", "图片不能超过8MB"));
+    }
+
+    @ExceptionHandler(com.neighbormarket.image.ImageStorageException.class)
+    ResponseEntity<ApiError> imageStorage(com.neighbormarket.image.ImageStorageException ex) {
+        log.error("Image storage operation failed", ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(new ApiError("IMAGE_STORAGE_UNAVAILABLE", "图片存储暂时不可用，请稍后重试"));
+    }
+
     @ExceptionHandler(ResponseStatusException.class)
     ResponseEntity<ApiError> responseStatus(ResponseStatusException ex) {
         HttpStatusCode status = ex.getStatusCode();

@@ -28,6 +28,19 @@ public interface ItemMapper extends BaseMapper<Item> {
     int updateEditableFields(@Param("item") Item item,
                              @Param("expectedVersion") Long expectedVersion);
 
+    @Update("""
+            UPDATE item
+            SET image_url = #{imageUrl}, version = version + 1
+            WHERE id = #{id}
+              AND publisher_id = #{publisherId}
+              AND status = 'AVAILABLE'
+              AND version = #{expectedVersion}
+            """)
+    int updateImageUrl(@Param("id") Long id,
+                       @Param("publisherId") Long publisherId,
+                       @Param("imageUrl") String imageUrl,
+                       @Param("expectedVersion") Long expectedVersion);
+
     @Select("""
             <script>
             SELECT i.id, i.publisher_id,

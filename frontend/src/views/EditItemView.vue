@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, messageOf } from '../api'
 import { auth, initializeAuth } from '../auth'
 import { buildItemPayload, populateItemForm, validateItemForm } from '../itemForm'
+import { uploadItemImage } from '../imageUpload'
+import ImagePicker from '../components/ImagePicker.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -12,6 +14,10 @@ const busy = ref(false)
 const error = ref('')
 const notice = ref('')
 const expectedVersion = ref(null)
+const imageUrl = ref('')
+const imageFile = ref(null)
+const imageBusy = ref(false)
+const imageProgress = ref(0)
 const form = reactive({
   title: '', description: '', category: '日用', tradeType: 'FREE', price: null,
   pickupLocation: '', slots: [{ startAt: '', endAt: '' }],
@@ -36,11 +42,50 @@ async function load() {
     if (item.publisher.id !== auth.user.id) throw new Error('只有发布者可以编辑物品')
     if (item.status !== 'AVAILABLE') throw new Error('只有可领取物品可以编辑')
     expectedVersion.value = item.version
+    imageUrl.value = item.imageUrl
     populateItemForm(form, item, slotResponse.data)
   } catch (e) {
     error.value = e.response ? messageOf(e) : e.message
   } finally {
     loading.value = false
+  }
+}
+
+async function uploadImage() {
+  if (!imageFile.value || imageBusy.value || busy.value) return
+  imageBusy.value = true
+  imageProgress.value = 0
+  error.value = ''
+  notice.value = ''
+  try {
+    const { data } = await uploadItemImage(api, route.params.id, expectedVersion.value, imageFile.value,
+      (progress) => { imageProgress.value = progress })
+    expectedVersion.value = data.version
+    imageUrl.value = data.imageUrl
+    imageFile.value = null
+    notice.value = '图片已上传。'
+  } catch (e) {
+    error.value = messageOf(e)
+  } finally {
+    imageBusy.value = false
+  }
+}
+
+async function removeImage() {
+  if (imageBusy.value || busy.value) return
+  imageBusy.value = true
+  error.value = ''
+  notice.value = ''
+  try {
+    const { data } = await api.delete(`/items/${route.params.id}/image`, { params: { expectedVersion: expectedVersion.value } })
+    expectedVersion.value = data.version
+    imageUrl.value = data.imageUrl
+    imageFile.value = null
+    notice.value = '图片已删除。'
+  } catch (e) {
+    error.value = messageOf(e)
+  } finally {
+    imageBusy.value = false
   }
 }
 
@@ -87,7 +132,18 @@ onMounted(load)
         </div>
       </section>
       <section class="form-section">
-        <div class="section-heading"><span class="section-number">02</span><div><h2>交接安排</h2><p>保存后旧时段会作为历史保留。</p></div></div>
+        <div class="section-heading"><span class="section-number">02</span><div><h2>物品图片</h2><p>图片操作独立保存，失败不会丢失其他表单内容。</p></div></div>
+        <div class="form-fields">
+          <ImagePicker :current-url="imageUrl" :disabled="busy || imageBusy" @select="imageFile = $event" />
+          <div class="image-actions">
+            <button type="button" :disabled="!imageFile || busy || imageBusy" @click="uploadImage">{{ imageBusy ? '处理中…' : '上传所选图片' }}</button>
+            <button type="button" class="secondary" :disabled="busy || imageBusy" @click="removeImage">删除当前图片</button>
+          </div>
+          <p v-if="imageBusy && imageFile" class="upload-progress" role="progressbar" aria-label="图片上传进度" :aria-valuenow="imageProgress">正在上传 {{ imageProgress }}%</p>
+        </div>
+      </section>
+      <section class="form-section">
+        <div class="section-heading"><span class="section-number">03</span><div><h2>交接安排</h2><p>保存后旧时段会作为历史保留。</p></div></div>
         <div class="form-fields">
           <label>公共交接地点<input v-model="form.pickupLocation" maxlength="200"></label>
           <fieldset><legend>未来交接时段（北京时间）</legend>

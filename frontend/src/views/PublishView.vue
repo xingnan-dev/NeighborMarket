@@ -5,6 +5,8 @@ import { api, messageOf } from '../api'
 import { applyRecommendedPrice, buildPublishPayload } from '../pricing'
 import { validateItemForm } from '../itemForm'
 import { createLatestRequest } from '../latestRequest'
+import { uploadItemImage } from '../imageUpload'
+import ImagePicker from '../components/ImagePicker.vue'
 
 const router = useRouter()
 const busy = ref(false)
@@ -14,6 +16,9 @@ const pricingError = ref('')
 const pricingResult = ref(null)
 const pricingStale = ref(false)
 const pricingRequests = createLatestRequest()
+const imageFile = ref(null)
+const createdItem = ref(null)
+const imageProgress = ref(0)
 const form = reactive({
   title: '',
   description: '',
@@ -96,6 +101,7 @@ function useRecommended() {
 
 async function submit() {
   if (busy.value) return
+  if (createdItem.value) return retryImage()
   error.value = ''
   error.value = validateItemForm(form)
   if (error.value) return
@@ -103,10 +109,37 @@ async function submit() {
   try {
     const payload = buildPublishPayload(form)
     const { data } = await api.post('/items', payload)
+    if (imageFile.value) {
+      try {
+        imageProgress.value = 0
+        await uploadItemImage(api, data.id, data.version, imageFile.value,
+          (progress) => { imageProgress.value = progress })
+      } catch (e) {
+        createdItem.value = { id: data.id, version: data.version }
+        error.value = `物品已发布，但图片上传失败：${messageOf(e)}。你可以重试图片上传，不会重复发布物品。`
+        return
+      }
+    }
     router.push(`/items/${data.id}`)
   } catch (e) {
     error.value = messageOf(e)
     if (e.response?.status === 401) router.push('/login')
+  } finally {
+    busy.value = false
+  }
+}
+
+async function retryImage() {
+  if (!createdItem.value || !imageFile.value || busy.value) return
+  busy.value = true
+  imageProgress.value = 0
+  error.value = ''
+  try {
+    await uploadItemImage(api, createdItem.value.id, createdItem.value.version, imageFile.value,
+      (progress) => { imageProgress.value = progress })
+    router.push(`/items/${createdItem.value.id}`)
+  } catch (e) {
+    error.value = `图片仍未上传成功：${messageOf(e)}。物品已经保存，可以继续重试。`
   } finally {
     busy.value = false
   }
@@ -243,8 +276,23 @@ onUnmounted(pricingRequests.cancel)
         </div>
       </section>
 
+      <section class="form-section" aria-labelledby="image-heading">
+        <div class="section-heading">
+          <span class="section-number">{{ form.tradeType === 'FIXED_PRICE' ? '04' : '03' }}</span>
+          <div><h2 id="image-heading">物品图片（可选）</h2><p>选择后会在物品发布成功后上传。</p></div>
+        </div>
+        <div class="form-fields">
+          <ImagePicker :disabled="busy" @select="imageFile = $event" />
+        </div>
+      </section>
+
       <p v-if="error" class="submit-error error" role="alert">{{ error }}</p>
-      <button class="publish-submit" :disabled="busy">{{ busy ? '发布中…' : '确认发布' }}</button>
+      <p v-if="busy && imageFile && imageProgress" class="upload-progress" role="progressbar" aria-label="图片上传进度" :aria-valuenow="imageProgress">正在上传图片 {{ imageProgress }}%</p>
+      <div v-if="createdItem" class="publish-recovery">
+        <button type="button" :disabled="busy || !imageFile" @click="retryImage">{{ busy ? '重试中…' : '重试上传图片' }}</button>
+        <RouterLink class="secondary-link" :to="`/items/${createdItem.id}`">暂不上传，查看物品</RouterLink>
+      </div>
+      <button v-else class="publish-submit" :disabled="busy">{{ busy ? '发布中…' : '确认发布' }}</button>
     </form>
   </section>
 </template>

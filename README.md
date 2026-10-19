@@ -108,6 +108,7 @@ npm run build
 - [docs/er.md](docs/er.md)：Flyway V1～V8 实体关系、字段与关键约束
 - [docs/IMAGE_STORAGE_AND_SECURITY.md](docs/IMAGE_STORAGE_AND_SECURITY.md)：图片存储抽象、上传限制、威胁模型与生命周期规则
 - [docs/STATE_TRANSITION_AUDIT.md](docs/STATE_TRANSITION_AUDIT.md)：物品、意向与交接的状态转换、权限及 409 边界
+- [docs/STATE_MACHINE_AND_CONCURRENCY.md](docs/STATE_MACHINE_AND_CONCURRENCY.md)：状态机、并发竞争、失败回滚与幂等语义
 - [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md)：可复现数据集、SQL 执行计划、查询数与优化证据
 - [docs/REDIS_DECISION.md](docs/REDIS_DECISION.md)：Redis、Session 和共享限流的采用门槛
 - [docs/CACHE_DECISION.md](docs/CACHE_DECISION.md)：物品、搜索、看板与图片缓存决策

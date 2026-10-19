@@ -16,7 +16,7 @@ Spring Boot REST
           MySQL + Flyway
 ~~~
 
-前端只调用后端 REST API，不直接访问 MySQL，也不直接访问模型供应商。开发环境由 Vite 将 /api 代理到 Spring Boot；生产部署尚未配置。
+前端只调用后端 REST API，不直接访问 MySQL，也不直接访问模型供应商。开发环境由 Vite 将 /api 代理到 Spring Boot；生产 Compose 由 Nginx 托管静态资源并将 `/api`、`/media` 和健康检查代理到单个 Spring Boot 后端。
 
 ## 认证与数据边界
 
@@ -68,7 +68,7 @@ Spring Boot REST
 
 ## 数据库演进
 
-Flyway 按 V1～V7 顺序执行：
+Flyway 按 V1～V8 顺序执行：
 
 1. V1 创建用户和物品基础表。
 2. V2 强化 last_confirmed_at 并增加索引。
@@ -77,3 +77,4 @@ Flyway 按 V1～V7 顺序执行：
 5. V5 只增加看板查询索引，不增加业务表或业务流程。
 6. V6 为交接时段增加 active 标志；重配只停用旧时段，不删除仍被历史意向引用的记录。
 7. V7 增加状态 CHECK、单物品 ACTIVE 交接唯一约束及同物品/用户复合外键；迁移在任何 DDL 前检查已有数据兼容性。
+8. V8 为物品增加乐观并发版本字段，支持编辑和领取申请以同一版本与行锁顺序竞争。

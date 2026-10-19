@@ -544,7 +544,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-F-03 共享 AI 限流（条件任务） | BLOCKED | P2 | 中高 | NM-F-01 决定采用 Redis | Redis 故障阻断手工发布 | 多实例共享原子限额和 TTL；故障降级明确；手工发布永远可用；容器集成测试通过 |
 | NM-F-04 Session 共享（条件任务） | BLOCKED | P2 | 中高 | 多实例且无粘性会话 | 引入序列化和运维复杂度 | 仅需求成立时用 Spring Session；跨实例登录可用；注销和过期一致；故障行为文档化 |
 | NM-F-05 缓存场景否决/采用记录 | VERIFIED | P2 | 低 | NM-C-10 | 用缓存掩盖慢 SQL | 热点物品和搜索缓存逐项评估一致性、命中率和失效成本；无收益则明确不引入 |
-| NM-F-06 架构边界复核 | TODO | P2 | 低 | NM-F-01～05 | 不必要拆服务 | 默认保持模块化单体；Spring Cloud/Kafka/RabbitMQ 无真实理由则记录为“不引入” |
+| NM-F-06 架构边界复核 | VERIFIED | P2 | 低 | NM-F-01～05 | 不必要拆服务 | 默认保持模块化单体；Spring Cloud/Kafka/RabbitMQ 无真实理由则记录为“不引入” |
 | NM-F-07 Phase F 验收与报告 | TODO | P2 | 低 | NM-F-01～06 | 把“不引入”误判为未完成 | 技术决策有数据和成本依据；条件任务保持 BLOCKED/不适用说明，不虚构实现 |
 
 ### Phase F 执行记录
@@ -566,6 +566,12 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-F-05 VERIFIED：新增 `docs/CACHE_DECISION.md`，分别评估热点物品、市场搜索、社区看板、用户状态和图片缓存。当前没有生产热点或重复查询分布，普通读取已经消除主要 N+1 且保持毫秒级，因此不新增 Redis、Spring Cache、缓存表或自制内存缓存。
 - 市场搜索的组合键基数高，任一发布、编辑或状态变化都可能影响多个列表、count 和页边界；缓存不能解决任意子串扫描。继续沿用 NM-C-05 的容量、p95 和数据库 CPU 阈值，触发后先评估 MySQL ngram FULLTEXT。
 - 保留现有图片一年 `public, immutable` HTTP 缓存，因为替换生成新键且一致性边界明确。文档同时规定业务缓存复评必须具备慢查询、数据库压力、真实重复率、允许陈旧时间、完整失效面和故障回源测试证据。
+
+#### 2026-10-19 / 批次 F4（架构边界复核）
+
+- NM-F-06 VERIFIED：新增 `docs/ARCHITECTURE_BOUNDARY_DECISION.md`。当前生产拓扑是 Nginx/Vue、单 Spring Boot 和单 MySQL；核心状态转换依赖同库事务、行锁、条件 UPDATE 与数据库约束，没有独立扩缩容、团队边界或故障隔离证据支持拆分。
+- 明确不引入 Spring Cloud、服务注册发现、Kafka、RabbitMQ、分布式事务或事件溯源。当前没有可靠异步投递的真实消费者；引入 Broker 只会新增重复消费、顺序、重试、死信、积压和灾难恢复责任。
+- 保留 `PricingGateway` 与 `ImageStorage` 两个可替换外部适配器，并记录独立扩缩容、明确数据所有权、真实异步消费者、单库瓶颈及完备可观测运维能力等复评条件。同时修正 `docs/architecture.md` 的生产部署和 Flyway V8 描述。
 
 ## 12. Phase G — 求职展示与最终交付
 

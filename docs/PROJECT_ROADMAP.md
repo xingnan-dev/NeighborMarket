@@ -545,7 +545,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-F-04 Session 共享（条件任务） | BLOCKED | P2 | 中高 | 多实例且无粘性会话 | 引入序列化和运维复杂度 | 仅需求成立时用 Spring Session；跨实例登录可用；注销和过期一致；故障行为文档化 |
 | NM-F-05 缓存场景否决/采用记录 | VERIFIED | P2 | 低 | NM-C-10 | 用缓存掩盖慢 SQL | 热点物品和搜索缓存逐项评估一致性、命中率和失效成本；无收益则明确不引入 |
 | NM-F-06 架构边界复核 | VERIFIED | P2 | 低 | NM-F-01～05 | 不必要拆服务 | 默认保持模块化单体；Spring Cloud/Kafka/RabbitMQ 无真实理由则记录为“不引入” |
-| NM-F-07 Phase F 验收与报告 | TODO | P2 | 低 | NM-F-01～06 | 把“不引入”误判为未完成 | 技术决策有数据和成本依据；条件任务保持 BLOCKED/不适用说明，不虚构实现 |
+| NM-F-07 Phase F 验收与报告 | VERIFIED | P2 | 低 | NM-F-01～06 | 把“不引入”误判为未完成 | 技术决策有数据和成本依据；条件任务保持 BLOCKED/不适用说明，不虚构实现 |
 
 ### Phase F 执行记录
 
@@ -572,6 +572,12 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-F-06 VERIFIED：新增 `docs/ARCHITECTURE_BOUNDARY_DECISION.md`。当前生产拓扑是 Nginx/Vue、单 Spring Boot 和单 MySQL；核心状态转换依赖同库事务、行锁、条件 UPDATE 与数据库约束，没有独立扩缩容、团队边界或故障隔离证据支持拆分。
 - 明确不引入 Spring Cloud、服务注册发现、Kafka、RabbitMQ、分布式事务或事件溯源。当前没有可靠异步投递的真实消费者；引入 Broker 只会新增重复消费、顺序、重试、死信、积压和灾难恢复责任。
 - 保留 `PricingGateway` 与 `ImageStorage` 两个可替换外部适配器，并记录独立扩缩容、明确数据所有权、真实异步消费者、单库瓶颈及完备可观测运维能力等复评条件。同时修正 `docs/architecture.md` 的生产部署和 Flyway V8 描述。
+
+#### 2026-10-19 / 批次 F5（Phase F 最终验收）
+
+- NM-F-07 VERIFIED：新增 `docs/PHASE_F_ACCEPTANCE_REPORT.md`，逐项验收 Redis、AI 指标、共享限流/Session 条件任务、业务缓存和架构边界。Phase F 所有无条件任务完成，NM-F-03、NM-F-04 因需求前提未成立继续保持 `BLOCKED`，不虚构实现或标记完成。
+- AI 遥测、估价服务和接口安全定向测试13项通过；引入遥测代码后的后端全量 `mvn verify` 为134项通过，0失败、0错误、0跳过，实际运行 MySQL 8 Testcontainers 与 Flyway V1→V8并成功生成可执行JAR和JaCoCo报告。后续纯文档批次未改变运行时代码。
+- 静态审计确认后端依赖、Compose和应用源码没有Redis、Spring Session Redis、Spring Cloud、Kafka、RabbitMQ或Spring Cache。验收未调用真实AI服务、未修改业务数据库；下一阶段进入Phase G，先处理README事实对齐。
 
 ## 12. Phase G — 求职展示与最终交付
 

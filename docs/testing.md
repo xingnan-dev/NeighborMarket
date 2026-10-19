@@ -39,6 +39,10 @@ CI 会保存 JaCoCo 报告14天。新增核心业务代码时，应针对缺口�
 
 报告显示主要缺口位于薄 Controller 委托、`ItemService` 发布/详情路径以及少量 DTO/启动入口。薄 Controller 将由 NM-D-09/NM-D-10 的组件和 E2E 测试覆盖，避免重复模拟实现细节；`ItemService` 后续应优先补充发布事务回滚、用户不存在和详情不存在场景。本批已补充数据库用户加载/不存在分支，以及物品确认时记录不存在、条件 UPDATE 竞争失败分支。
 
+## 2026-10-19 最终复核
+
+当前完整 `mvn verify` 运行134项测试，0失败、0错误、0跳过，并实际启动 Testcontainers MySQL 8.0、执行 Flyway V1～V8、打包 JAR 和生成 JaCoCo。当前覆盖率为行82.6%（927/1,122）、分支61.3%（264/431）、方法85.5%（390/456）、类92.7%（76/82）。前端19项 Node 单元测试、9项 Vue 组件测试与生产构建通过；隔离 Compose 中1项 Playwright 双会话核心 E2E 通过，环境随后销毁。完整分层、环境、CI 链接和限制见 `AUTOMATED_TEST_REPORT.md`。
+
 ## 前端测试
 
 `npm test` 先运行 `test/*.test.js` 中的 Node 单元测试，再由 Vitest + jsdom 运行 `test/component/**/*.spec.js` 组件测试。组件测试当前覆盖登录校验、错误反馈、安全跳转、重复提交、详情页匿名/发布者权限状态，以及发布表单前置校验；所有网络调用均 mock，不接触真实后端或 AI 服务。

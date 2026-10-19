@@ -110,6 +110,7 @@ npm run build
 - [docs/STATE_TRANSITION_AUDIT.md](docs/STATE_TRANSITION_AUDIT.md)：物品、意向与交接的状态转换、权限及 409 边界
 - [docs/STATE_MACHINE_AND_CONCURRENCY.md](docs/STATE_MACHINE_AND_CONCURRENCY.md)：状态机、并发竞争、失败回滚与幂等语义
 - [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md)：可复现数据集、SQL 执行计划、查询数与优化证据
+- [docs/AUTOMATED_TEST_REPORT.md](docs/AUTOMATED_TEST_REPORT.md)：自动化测试分层、执行环境、数量、覆盖率、跳过项与 CI 证据
 - [docs/REDIS_DECISION.md](docs/REDIS_DECISION.md)：Redis、Session 和共享限流的采用门槛
 - [docs/CACHE_DECISION.md](docs/CACHE_DECISION.md)：物品、搜索、看板与图片缓存决策
 - [docs/ARCHITECTURE_BOUNDARY_DECISION.md](docs/ARCHITECTURE_BOUNDARY_DECISION.md)：模块化单体、微服务与消息队列取舍

@@ -592,7 +592,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-G-07 Docker 与部署指南 | VERIFIED | P1 | 中 | Phase D | 缺少初始化/恢复说明 | 新机器按文档启动；包含配置、健康检查、卷、备份、升级和停止方法 |
 | NM-G-08 演示流程 | VERIFIED | P2 | 低 | A～F | 演示路径依赖脆弱数据 | 核心闭环、并发证据、AI 降级、健康与 CI 在限定时间可复现 |
 | NM-G-09 技术选型与取舍 | VERIFIED | P1 | 低 | Phase F | 堆砌名词 | 解释条件 UPDATE、单体、MySQL、Redis取舍及未使用 MQ/微服务的理由 |
-| NM-G-10 最终验收审计 | DONE | P0 | 中 | NM-G-01～09 | 遗留 P0/P1 被文档掩盖 | 按完成标准逐项复验；未知项明确标记；Git 状态、构建、测试、部署和文档一致 |
+| NM-G-10 最终验收审计 | VERIFIED | P0 | 中 | NM-G-01～09 | 遗留 P0/P1 被文档掩盖 | 按完成标准逐项复验；未知项明确标记；Git 状态、构建、测试、部署和文档一致 |
 
 ### Phase G 执行记录
 
@@ -658,6 +658,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - 后端 `mvn verify` 在宿主Docker权限下实际运行MySQL 8 Testcontainers与Flyway V1→V8，134项通过、0失败、0错误、0跳过并成功生成JAR和JaCoCo；前端19项单元、9项组件和生产构建通过。
 - 独立 `neighbormarket-g10-e2e` Compose 环境中三服务Healthy，部署smoke与Playwright核心闭环1项通过；重启后E2E物品仍存在。随后已定向删除该项目的容器、网络和两个卷，未修改现有业务数据库，未调用真实AI。
 - 本地验收已完成，但私有仓库当前没有可供本机CLI读取的Actions凭据。待本批提交推送并由Actions确认全部Job成功后，补充运行链接并将NM-G-10从DONE升级为VERIFIED；在此之前不把历史CI冒充为当前提交结果。
+- 远端证据回填：仓库所有者已确认本报告提交 `0cf70e3` 的 GitHub Actions 全部通过；结合本地134项后端、28项前端、核心E2E、Compose重启持久性和零跳过证据，NM-G-10由DONE升级为VERIFIED。Phase G全部任务完成。
 
 ## 13. 测试与回归策略
 

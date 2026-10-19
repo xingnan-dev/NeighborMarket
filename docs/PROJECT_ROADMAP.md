@@ -587,7 +587,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | NM-G-02 架构图与模块边界 | VERIFIED | P2 | 中 | C、D | 图与代码漂移 | 展示浏览器、前后端、DB、可选 Redis/AI 边界；标注同步调用和数据所有权 |
 | NM-G-03 ER 图更新 | VERIFIED | P1 | 中 | 最终迁移 | 漏字段/约束 | 与所有 Flyway 迁移逐项核对；PNG/PDF/源码一致；标出关键约束 |
 | NM-G-04 状态机与并发时序 | VERIFIED | P1 | 中 | Phase B | 只画理想路径 | 包含申请、确认竞争、取消/完成竞争、失败回滚和幂等语义 |
-| NM-G-05 SQL 优化报告 | TODO | P1 | 中 | Phase C | 不同数据集不可比较 | 固定数据集、SQL、EXPLAIN ANALYZE、查询数和前后指标完整 |
+| NM-G-05 SQL 优化报告 | VERIFIED | P1 | 中 | Phase C | 不同数据集不可比较 | 固定数据集、SQL、EXPLAIN ANALYZE、查询数和前后指标完整 |
 | NM-G-06 自动化测试报告 | TODO | P1 | 中 | Phase D/E | 手工结果冒充自动化 | 按单元/集成/安全/组件/E2E 分类，记录数量、环境、命令、跳过项和 CI 链接 |
 | NM-G-07 Docker 与部署指南 | TODO | P1 | 中 | Phase D | 缺少初始化/恢复说明 | 新机器按文档启动；包含配置、健康检查、卷、备份、升级和停止方法 |
 | NM-G-08 演示流程 | TODO | P2 | 低 | A～F | 演示路径依赖脆弱数据 | 核心闭环、并发证据、AI 降级、健康与 CI 在限定时间可复现 |
@@ -620,6 +620,12 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-G-04 VERIFIED：新增 `docs/STATE_MACHINE_AND_CONCURRENCY.md`，以 Mermaid 分别绘制物品、领取意向和交接状态机，以及编辑/申请、两人确认、取消/完成三组并发时序。
 - 图示按实际实现区分两类并发控制：编辑与申请通过同一物品 `SELECT FOR UPDATE` 和 expectedVersion 串行；多人确认通过 `AVAILABLE -> RESERVED` 条件UPDATE抢占，取消/完成通过 `ACTIVE` 条件UPDATE决定唯一终态。失败方均返回409并刷新权威状态。
 - 文档补充确认、取消、完成和编辑中途失败的事务回滚矩阵，以及重复申请复用唯一记录、重复确认/取消/完成返回409、旧版本写入不覆盖的幂等边界；明确前端防重不能替代数据库正确性。
+
+#### 2026-10-19 / 批次 G5（SQL 优化报告）
+
+- NM-G-05 VERIFIED：在当前 `main` 上复跑 `PerformanceBaselineIntegrationTest` 与 `SearchStrategyIntegrationTest`，两个临时 MySQL 8.0 均从空库执行 Flyway V1～V8；4项测试全部通过且零跳过，未访问开发数据库。
+- `docs/PERFORMANCE_BASELINE.md` 新增 V8 最终复核，记录固定数据、执行命令、完整 SQL/查询数证据位置、同轮 `EXPLAIN ANALYZE` 计划及优化前后中位数。我的交接由旧计划约13.287ms降至2.943ms，最想要由22.344ms降至15.249ms；可靠结论以扫描/循环结构和固定查询上界为主。
+- 30,000行搜索复测继续证明低命中、唯一命中和无命中 LIKE 存在线性扫描；FULLTEXT 完整 token 候选只读取390行，但不能保持任意子串语义。因此不新增索引或搜索组件，保留既定100,000级数据、p95超过200ms或数据库CPU明显升高的复评阈值。
 
 ## 13. 测试与回归策略
 

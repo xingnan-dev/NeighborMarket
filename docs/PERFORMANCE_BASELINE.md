@@ -2,6 +2,7 @@
 
 > 基线编号：NM-C-01
 > 采集日期：2026-10-09
+> 最终复核：2026-10-19（NM-G-05，Flyway V8）
 > 数据库：Testcontainers MySQL 8.0
 > 结论边界：这是优化前基线，不是生产容量结论，也不构成新增索引的直接依据。
 
@@ -10,7 +11,7 @@
 基线由 `PerformanceBaselineIntegrationTest` 自动完成以下步骤：
 
 1. 创建测试专用 MySQL 8.0 容器。
-2. 从空库执行 Flyway V1～V7。
+2. 从空库执行当前全部 Flyway V1～V8。
 3. 在单个事务内生成固定规模的非生产数据。
 4. 提交后执行 `ANALYZE TABLE`，避免批量装载后的统计信息失真。
 5. 每条 SQL 先预热一次，再执行5次 `EXPLAIN ANALYZE`，记录客户端中位耗时和最后一次真实执行计划。
@@ -182,3 +183,49 @@ mvn "-Dtest=PerformanceBaselineIntegrationTest" test
 - 当前不引入 Elasticsearch：30,000行最坏本机查询仍为数十毫秒，项目也没有相关性、多字段权重、拼写纠错或搜索集群需求。
 - 当可搜索物品接近100,000级、搜索 p95 超过200ms、搜索导致数据库 CPU 明显升高，或产品接受“分词/前缀搜索”替代任意子串时，使用真实中文语料优先评估 MySQL ngram FULLTEXT。
 - 只有 MySQL FULLTEXT 无法满足已经确认的相关性、语言分析、容错或独立扩缩容需求时，再评估专用搜索引擎。
+
+## 11. NM-G-05 最终复核
+
+2026-10-19 在当前 `main` 代码上重新执行性能基线与搜索策略测试。两个测试均使用独立 Testcontainers MySQL 8.0，从空库实际执行 Flyway V1～V8；测试数据只存在于临时容器，未读取或修改开发数据库。完整生产 SQL、候选 SQL 及固定数据生成规则分别位于：
+
+- `backend/src/test/java/com/neighbormarket/integration/PerformanceBaselineIntegrationTest.java`
+- `backend/src/test/java/com/neighbormarket/integration/SearchStrategyIntegrationTest.java`
+- 查询数量断言位于 `ItemListQueryIntegrationTest` 和 `ExchangeReadQueryIntegrationTest`
+
+执行命令：
+
+```powershell
+cd E:\NeighborMarket\backend
+$env:DOCKER_API_VERSION='1.44'
+mvn "-Dtest=PerformanceBaselineIntegrationTest,SearchStrategyIntegrationTest" test
+```
+
+结果为 `4 passed, 0 failures, 0 errors, 0 skipped`。每个 SQL 仍按预热1次、连续执行5次 `EXPLAIN ANALYZE` 并取客户端中位数；以下数字是本轮 Docker Desktop 的同机比较，不替代生产 p95/p99。
+
+### 11.1 当前 V8 计划与优化前后指标
+
+| 查询 | 优化前/基线中位 | 当前中位 | 当前计划关键事实 | 结论 |
+| --- | ---: | ---: | --- | --- |
+| 市场首页 | 1.557ms | 1.566ms | `idx_item_market` 反向读取12行；12次用户主键投影在同一次请求内完成 | 无单 SQL 回归，查询数保持2 |
+| 市场关键词首页 | 1.763ms | 2.269ms | 检查91行返回12行；前导 `%` 仍逐行过滤 | 保留子串语义 |
+| 我的交接（旧 JOIN 顺序 → 当前） | 13.287ms | 2.943ms | 旧计划形成10,000行中间组合；当前先由双方索引合并筛为60行 | 当前改写继续有效 |
+| 最想要 Top 5（旧 → 当前） | 22.344ms | 15.249ms | item 主键查找由9,000次降为3,000次 | 当前改写继续有效 |
+| 最快完成 | 6.102ms | 3.419ms | 扫描600条完成交接并回表600次 | SQL 未改；保留权威 `handover.completed_at` 语义 |
+
+“市场首页”和“市场关键词首页”的优化前数字来自 NM-C-01 原始基线，本轮数字用于确认当前投影方案没有明显单 SQL 退化；物品列表路径的主要、稳定收益仍是市场列表从 `2 + N` 收敛为2、我的发布从 `3 + N` 收敛为3。我的交接和最想要采用本轮同容器内的旧 SQL/当前 SQL 对照，计划结构比绝对毫秒值更可靠。
+
+### 11.2 当前 V8 搜索复测
+
+| 场景 | LIKE page 中位 | LIKE count 中位 | 实际读取 | 决策 |
+| --- | ---: | ---: | ---: | --- |
+| 高频命中 | 1.567ms | 34.332ms | page 检查14行；count 读取30,000行 | 首页索引提前停止有效 |
+| 低频命中 | 2.903ms | 41.055ms | page 检查801行；count 读取30,000行 | 规模增长后复评 |
+| 唯一命中 | 35.607ms | 37.501ms | page/count 均读取30,000行 | 线性扫描风险成立 |
+| 无命中 | 41.038ms | 36.634ms | page/count 均读取30,000行 | 线性扫描风险成立 |
+| FULLTEXT 完整 token 候选 | 3.937ms | 3.035ms | 读取390条全文索引结果 | 性能可行，但不兼容任意子串 |
+
+V8 仅增加物品乐观锁版本列，没有改变上述访问路径或索引决策。当前仍不新增性能索引、不引入 Redis/Elasticsearch，也不把本机耗时宣传为容量结论；触发阈值继续采用第10.2节定义的100,000级数据、搜索 p95 超过200ms或数据库 CPU 明显升高。
+
+### 11.3 查询数量最终结论
+
+查询数量证据继续由 MyBatis `StatementHandler.prepare` 拦截器统计，固定上界与第7、8节一致：市场列表2、我的发布3、物品意向3、单个意向2、我的交接2、交接详情2、留言2、我的看板3。它们均不随返回条数线性增长；这是相较本机毫秒差异更稳定的 N+1 优化证据。

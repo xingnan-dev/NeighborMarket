@@ -105,7 +105,7 @@ npm run build
 ## 文档索引
 
 - [docs/architecture.md](docs/architecture.md)：最终系统架构与边界
-- [docs/er.md](docs/er.md)：实体关系与关键约束（当前图示到 V7，V8 版本字段将在 NM-G-03 更新）
+- [docs/er.md](docs/er.md)：Flyway V1～V8 实体关系、字段与关键约束
 - [docs/IMAGE_STORAGE_AND_SECURITY.md](docs/IMAGE_STORAGE_AND_SECURITY.md)：图片存储抽象、上传限制、威胁模型与生命周期规则
 - [docs/STATE_TRANSITION_AUDIT.md](docs/STATE_TRANSITION_AUDIT.md)：物品、意向与交接的状态转换、权限及 409 边界
 - [docs/PERFORMANCE_BASELINE.md](docs/PERFORMANCE_BASELINE.md)：可复现数据集、SQL 执行计划、查询数与优化证据
@@ -137,5 +137,4 @@ npm run build
 - AI 估价不代表实时二手市场成交价，仅提供辅助参考。
 - 当前部署为单个后端实例；Session 和 AI 冷却不跨实例共享。达到文档中的扩容或严格配额条件后再复评 Redis。
 - AI 指标只记录固定结果分类、耗时和进程内匿名用户键，不记录 Prompt、物品内容或供应商响应；当前供应商协议没有可信 token 用量，因此不虚构货币成本。
-- ER 图资产当前仍是 V7 版本，尚未画入 V8 的 `item.version`；数据库迁移和运行时代码已经使用 V8，此文档资产将在 NM-G-03 更新。
 - 尚未配置正式公网域名、TLS 终止、自动备份恢复和生产级指标采集。公网部署必须位于 HTTPS 反向代理后，并启用 Secure Session Cookie。

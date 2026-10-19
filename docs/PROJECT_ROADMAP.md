@@ -585,7 +585,7 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 | --- | --- | --- | --- | --- | --- | --- |
 | NM-G-01 README 与事实对齐 | VERIFIED | P1 | 中 | A～F | 文档提前声称完成 | 安装、配置、限制、已实现/未实现与代码一致；无真实秘密；命令可复制执行 |
 | NM-G-02 架构图与模块边界 | VERIFIED | P2 | 中 | C、D | 图与代码漂移 | 展示浏览器、前后端、DB、可选 Redis/AI 边界；标注同步调用和数据所有权 |
-| NM-G-03 ER 图更新 | TODO | P1 | 中 | 最终迁移 | 漏字段/约束 | 与所有 Flyway 迁移逐项核对；PNG/PDF/源码一致；标出关键约束 |
+| NM-G-03 ER 图更新 | VERIFIED | P1 | 中 | 最终迁移 | 漏字段/约束 | 与所有 Flyway 迁移逐项核对；PNG/PDF/源码一致；标出关键约束 |
 | NM-G-04 状态机与并发时序 | TODO | P1 | 中 | Phase B | 只画理想路径 | 包含申请、确认竞争、取消/完成竞争、失败回滚和幂等语义 |
 | NM-G-05 SQL 优化报告 | TODO | P1 | 中 | Phase C | 不同数据集不可比较 | 固定数据集、SQL、EXPLAIN ANALYZE、查询数和前后指标完整 |
 | NM-G-06 自动化测试报告 | TODO | P1 | 中 | Phase D/E | 手工结果冒充自动化 | 按单元/集成/安全/组件/E2E 分类，记录数量、环境、命令、跳过项和 CI 链接 |
@@ -608,6 +608,12 @@ Phase A 设计约束：时段问题优先采用“旧时段保留为历史、仅
 - NM-G-02 VERIFIED：将 `docs/architecture.md` 的简化文本链路升级为两张 Mermaid 图。生产拓扑图展示浏览器、Nginx/Vue、单 Spring Boot、MySQL、图片卷、可选 AI 与当前未部署 Redis，并区分当前同步调用和条件边界。
 - 后端模块图按 Web/DTO、Security、物品、交换门面、领域工作流、Dashboard、AI、图片和 Mapper 展示进程内依赖，明确业务状态 Controller 不直连 Mapper，同时如实标出 `AuthController` 用户资料只读查询例外；领域模块不是远程服务，写事务位于实际状态转换 Service。
 - 新增数据所有权表，分别记录核心业务数据、Session、受管图片、看板、AI估价和遥测的权威来源及一致性边界；并把并发说明更新为统一行锁顺序、条件UPDATE、V7约束和V8物品版本的组合保障。
+
+#### 2026-10-19 / 批次 G3（ER 图 V8 对齐）
+
+- NM-G-03 VERIFIED：逐项核对 Flyway V1～V8，更新 `docs/er.md`、PNG 和 PDF 三种 ER 资产。图中包含6张业务表、全部核心字段、关系基数、V6 `pickup_slot.active`、V7状态/复合外键/单ACTIVE交接约束，以及V8 `item.version`非负版本字段。
+- PDF 以可嵌入中文字体生成，再由同一 PDF 使用 Poppler 144 DPI 渲染 PNG，保证两份视觉资产一致。两轮视觉检查修复了关系标签遮挡和约束文字溢出；最终单页图无裁切、重叠或不可读字段。
+- `docs/er.md` 明确区分实体关系与普通查询索引，并说明 `active_item_id` 生成列、`current_handover_id` 同物品复合外键、留言自关联和服务层一层回复边界。README 已移除ER资产停留V7的旧限制。
 
 ## 13. 测试与回归策略
 

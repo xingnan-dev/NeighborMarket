@@ -11,7 +11,7 @@ fieldset{border:1px solid var(--line,#ddd2bf);border-radius:18px;padding:1rem;ma
 /* Stage 4 AI pricing */
 .publish-panel{max-width:780px}.ai-pricing{display:grid;gap:16px;padding:22px;border:1px solid #d9c8ad;border-radius:20px;background:#faf7f0;min-width:0}.ai-pricing h2{margin:0;font-size:24px}.ai-pricing .eyebrow{margin:0 0 5px}.ai-disclaimer{margin:0;color:#687770;font-size:13px;line-height:1.5}.pricing-result{padding:16px;border-radius:15px;background:#fff;border:1px solid #e6dac7;overflow-wrap:anywhere}.pricing-result h3,.pricing-result p{margin-top:0}.price-range{font-size:20px;color:#bd5d2f;font-weight:800}.pricing-result ul{padding-left:20px}@media(max-width:600px){.ai-pricing{padding:16px}.ai-pricing .form-row{grid-template-columns:1fr}.pricing-result button{width:100%}}
 
-/* Interview-ready visual refinement */
+/* Shared visual refinement */
 :root{--ink:#223a33;--muted:#68776f;--forest:#294f45;--forest-soft:#e5eee9;--orange:#c96d38;--orange-dark:#a95028;--cream:#f6f1e7;--paper:#fffdf9;--line:#dfd6c7;--line-strong:#cfc2ae;--shadow-sm:0 5px 18px rgba(39,63,54,.07);--shadow-md:0 12px 32px rgba(39,63,54,.1);color:var(--ink);background:var(--cream)}
 html,body{min-width:320px;overflow-x:hidden}body{background:var(--cream)}
 button,input,select,textarea{min-height:44px}button{transition:background-color .18s,border-color .18s,box-shadow .18s,transform .18s}button:hover:not(:disabled){background:var(--orange-dark)}

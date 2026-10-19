@@ -122,6 +122,7 @@ npm run build
 - [docs/PHASE_F_ACCEPTANCE_REPORT.md](docs/PHASE_F_ACCEPTANCE_REPORT.md)：可选技术阶段的最终验收证据
 - [docs/stage-4.md](docs/stage-4.md)：AI 估价协议与校验记录
 - [docs/demo-guide.md](docs/demo-guide.md)：5 分钟项目演示脚本
+- [docs/TECHNICAL_DECISIONS.md](docs/TECHNICAL_DECISIONS.md)：技术选型、否决方案与复评条件
 - [docs/technical-stack.md](docs/technical-stack.md)：技术栈与工程实践简介
 - [docs/deployment.md](docs/deployment.md)：环境隔离、后端镜像与健康检查约定
 - [docs/testing.md](docs/testing.md)：后端测试分层、JaCoCo 报告与覆盖率使用原则

@@ -5,7 +5,7 @@
 - 前端：Vue 3、Vue Router、Vite、原生 CSS。
 - 后端：Java 17、Spring Boot、Spring Security Session、Bean Validation。
 - 数据访问：MyBatis-Plus。
-- 数据库：MySQL 8，Flyway 管理 V1～V7 迁移。
+- 数据库：MySQL 8，Flyway 管理 V1～V8 迁移。
 - AI：后端调用 OpenAI-compatible Chat Completions，前端只接收经过校验的 DTO。
 
 ## 数据与权限
@@ -22,4 +22,4 @@ API Key 和供应商配置只从环境变量读取。后端限制输入与结构
 
 ## 看板与测试
 
-社区看板由 DashboardMapper 使用 SQL 聚合生成 DTO，不加载全表到 Java 计算；V5 提供看板索引，V6 通过 active 时段保留意向历史，V7 强化交易数据一致性。后端使用 mvn test、mvn package，前端使用 npm test、npm run build 验证。当前项目尚未配置正式公网部署。
+社区看板由 DashboardMapper 使用 SQL 聚合生成 DTO，不加载全表到 Java 计算；V5 提供看板索引，V6 通过 active 时段保留意向历史，V7 强化交易数据一致性，V8 增加物品版本字段。后端使用 `mvn verify`，前端使用 `npm test`、`npm run test:component` 和 `npm run build` 验证，并有真实 MySQL 与核心浏览器 E2E。项目提供本地 Docker Compose 部署；正式公网域名、TLS、自动化备份恢复和生产级指标采集仍需由部署环境配置。

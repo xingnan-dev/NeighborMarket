@@ -13,6 +13,7 @@ async function signout() {
 </script>
 
 <template>
+  <a class="skip-link" href="#main-content">跳到主要内容</a>
   <header class="site-header">
     <RouterLink class="brand" to="/" aria-label="邻里闲置首页">
       <span class="brand-mark" aria-hidden="true">邻</span>
@@ -27,7 +28,7 @@ async function signout() {
       <RouterLink v-else to="/login">登录</RouterLink>
     </nav>
   </header>
-  <main><RouterView /></main>
+  <main id="main-content" tabindex="-1"><RouterView /></main>
   <nav class="mobile-nav" aria-label="移动端主导航">
     <RouterLink to="/">逛闲置</RouterLink>
     <RouterLink to="/publish">发布</RouterLink>

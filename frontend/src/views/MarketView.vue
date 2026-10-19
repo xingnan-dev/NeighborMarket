@@ -93,16 +93,16 @@ onUnmounted(itemRequests.cancel)
     </form>
   </section>
 
-  <p v-if="loading" class="state">正在按当前条件查找邻里好物…</p>
-  <p v-else-if="error" class="state error">{{ error }} <button type="button" @click="load(page)">重试</button></p>
-  <div v-else-if="!items.length" class="state empty-state">
+  <p v-if="loading" class="state" role="status" aria-live="polite">正在按当前条件查找邻里好物…</p>
+  <p v-else-if="error" class="state error" role="alert">{{ error }} <button type="button" @click="load(page)">重试</button></p>
+  <div v-else-if="!items.length" class="state empty-state" role="status">
     <strong>暂时没有符合条件的物品</strong>
     <span>试试减少一个筛选条件，或换个关键词看看。</span>
   </div>
   <section v-else class="grid" aria-label="闲置物品列表">
     <ItemCard v-for="item in items" :key="item.id" :item="item" />
   </section>
-  <div v-if="pages > 1" class="pager">
+  <div v-if="pages > 1" class="pager" aria-label="分页导航">
     <button type="button" :disabled="page <= 1" @click="load(page - 1)">上一页</button>
     <span>第 {{ page }} / {{ pages }} 页</span>
     <button type="button" :disabled="page >= pages" @click="load(page + 1)">下一页</button>

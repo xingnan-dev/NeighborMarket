@@ -11,6 +11,7 @@ import DashboardView from './views/DashboardView.vue'
 import { setUnauthorizedHandler } from './api'
 import { auth } from './auth'
 import './style.css'
+import './accessibility.css'
 const router=createRouter({history:createWebHistory(),routes:[
  {path:'/',component:MarketView},{path:'/login',component:LoginView},{path:'/publish',component:PublishView},
  {path:'/items/:id',component:DetailView},{path:'/items/:id/edit',component:EditItemView},{path:'/mine',component:MineView},{path:'/dashboard',component:DashboardView}

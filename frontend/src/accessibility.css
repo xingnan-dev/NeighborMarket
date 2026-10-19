@@ -1,0 +1,16 @@
+.skip-link {
+  position: fixed; top: 8px; left: 8px; z-index: 100;
+  transform: translateY(-160%); padding: 10px 14px; border-radius: 9px;
+  color: #fff; background: #1f4038;
+}
+.skip-link:focus { transform: none; }
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, textarea:focus-visible {
+  outline: 3px solid #e5945f; outline-offset: 3px;
+}
+button:disabled { cursor: not-allowed; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important; transition: none !important; animation: none !important;
+  }
+}
